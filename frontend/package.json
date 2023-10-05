@@ -1,7 +1,6 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "main": "index.js",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -14,6 +13,8 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@kiltprotocol/sdk-js": "^0.34.0",
+    "ky": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }
