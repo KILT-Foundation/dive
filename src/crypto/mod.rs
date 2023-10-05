@@ -1,0 +1,47 @@
+use std::str::FromStr;
+
+use self::{
+    device::{CryptoDevice, ZkCtx},
+    manager::PairKeyManager,
+};
+
+pub mod device;
+pub mod manager;
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct KeysFileStructure {
+    payment_account_seed: String,
+    did_auth_seed: String,
+}
+
+pub fn init_keys() -> Result<PairKeyManager, Box<dyn std::error::Error>> {
+    // first check if keys are already initialized by checking /etc/kilt/keys.json file
+    let keys_file_path = "/etc/kilt/keys.json";
+    // check if file exists
+    if !std::path::Path::new(keys_file_path).exists() {
+        let hsm6 = ZkCtx::new()?;
+        let payment_random_seed = hsm6.get_random_bytes(32)?;
+        let auth_random_seed = hsm6.get_random_bytes(32)?;
+        let payment_mnemonic = bip39::Mnemonic::from_entropy(&payment_random_seed)?;
+        let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
+        let keys_file = KeysFileStructure {
+            payment_account_seed: payment_mnemonic.to_string(),
+            did_auth_seed: auth_mnemonic.to_string(),
+        };
+        let keys_file_json = serde_json::to_string_pretty(&keys_file)?;
+        std::fs::create_dir_all("/etc/kilt")?;
+        std::fs::write(keys_file_path, keys_file_json)?;
+        let manager =
+            PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
+        Ok(manager)
+    } else {
+        let keys_file_json = std::fs::read_to_string(keys_file_path)?;
+        let keys_file: KeysFileStructure = serde_json::from_str(&keys_file_json)?;
+        let payment_mnemonic = bip39::Mnemonic::from_str(&keys_file.payment_account_seed)?;
+        let auth_mnemonic = bip39::Mnemonic::from_str(&keys_file.did_auth_seed)?;
+        let manager =
+            PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
+        Ok(manager)
+    }
+}
