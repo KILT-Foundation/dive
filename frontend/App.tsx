@@ -11,8 +11,13 @@ async function getPaymentAddress() {
 }
 
 async function getExistingDid() {
-  const { did } = await ky.get(`${apiUrl}/did`).json<{ did: DidUri }>();
-  return did;
+  try {
+    const { did } = await ky.get(`${apiUrl}/did`).json<{ did: DidUri }>();
+    return did;
+  } catch (exception) {
+    console.error(exception);
+    return undefined;
+  }
 }
 
 export function App() {
