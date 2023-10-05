@@ -56,7 +56,7 @@ export function App() {
     try {
       setBoxDidPending(true);
 
-      await ky.post(`${apiUrl}/did`).json();
+      await ky.post(`${apiUrl}/did`, { timeout: false }).json();
     } catch (error) {
       console.error(error);
     } finally {
@@ -83,7 +83,7 @@ export function App() {
         setProgress((old) => old + 1);
       }, 1000);
 
-      await ky.post(`${apiUrl}/payment`, { body: signedExtrinsic });
+      await ky.post(`${apiUrl}/payment`, { body: signedExtrinsic, timeout: false });
     } catch (error) {
       console.error(error);
     } finally {
