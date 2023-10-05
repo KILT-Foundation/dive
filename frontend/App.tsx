@@ -6,11 +6,13 @@ import { useAsyncValue } from './useAsyncValue';
 const apiUrl = '/api/v1';
 
 async function getPaymentAddress() {
-  return await ky.get(`${apiUrl}/payment`).json<KiltAddress>();
+  const { address } = await ky.get(`${apiUrl}/payment`).json<{ address: KiltAddress }>();
+  return address;
 }
 
 async function getExistingDid() {
-  return await ky.get(`${apiUrl}/did`).json<DidUri>();
+  const { did } = await ky.get(`${apiUrl}/did`).json<{ did: DidUri }>();
+  return did;
 }
 
 export function App() {
@@ -76,7 +78,7 @@ export function App() {
         setProgress((old) => old + 1);
       }, 1000);
 
-      await ky.post(`${apiUrl}/did`, { json: { signedExtrinsic } }).json();
+      await ky.post(`${apiUrl}/payment`, { body: signedExtrinsic });
     } catch (error) {
       console.error(error);
     } finally {
