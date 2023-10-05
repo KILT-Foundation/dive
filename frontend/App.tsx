@@ -1,9 +1,3 @@
-import * as React from 'react';
-
-const App: React.FC = () => {
+export function App() {
     return <div>Hello World</div>;
-}
-
-export {
-    App
 }
