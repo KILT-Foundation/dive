@@ -1,4 +1,4 @@
-use std::sync::PoisonError;
+use std::{sync::PoisonError, string::FromUtf8Error};
 
 use actix_web::error::PayloadError;
 
@@ -63,3 +63,14 @@ impl From<PayloadError> for Error {
     }
 }
 
+impl From<FromUtf8Error> for Error {
+    fn from(_err: FromUtf8Error) -> Self {
+        Self::Unknown
+    }
+}
+
+impl From<hex::FromHexError> for Error {
+    fn from(_err: hex::FromHexError) -> Self {
+        Self::Unknown
+    }
+}

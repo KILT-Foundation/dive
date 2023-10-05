@@ -80,7 +80,9 @@ pub async fn submit_extrinsic(app_state: web::Data<AppState>, mut payload: web::
     let keys = app_state.key_manager.lock()?;
     let signer = BoxSigner(keys.get_payment_account_signer());
 
-    submit_call(&cli, &signer, &body.to_vec(), WaitFor::Finalized).await?;
+    let call = hex::decode(String::from_utf8(body.to_vec())?)?;
+
+    submit_call(&cli, &signer, &call, WaitFor::Finalized).await?;
 
     Ok(HttpResponse::Ok().json(json!({"did": "did:kilt:123"})))
 }
