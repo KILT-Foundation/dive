@@ -95,22 +95,22 @@ export function App() {
   }, [address]);
 
   return <section>
-    <h1>OLI-Box</h1>
+    <h1>OLI Box</h1>
 
-    <section>
+    <section className="box">
       <h3>Anlage</h3>
-      {boxDid && <p>✅️ Identifikator: {boxDid}</p>}
+      {boxDid && <p>✅️ Identität: {boxDid}</p>}
       {!boxDid && (
         <p>
-          ❌️ Identifikator: nicht vorhanden,
-          {' '}
+          Noch keine Identität vorhanden
           {!boxDidPending && (
             <button
+              className="init"
               type="button"
               onClick={handleCreateBoxDIDClick}
               disabled={ownerDidPending}
             >
-              erstellen
+              Identität erstellen!
             </button>
           )}
           {boxDidPending && <progress max={40} value={progress} />}
@@ -118,7 +118,7 @@ export function App() {
       )}
     </section>
 
-    <section>
+    <section className="box">
       <h3>Betreiber</h3>
       {address && (
         <p>
@@ -133,7 +133,7 @@ export function App() {
                 onClick={handleCreateOwnerDIDClick}
                 disabled={boxDidPending}
               >
-                Identifikator erstellen mit {name}
+                Identität erstellen mit {name}
               </button>
             ))}
           </Fragment>}
@@ -144,6 +144,6 @@ export function App() {
     </section>
 
     <img src={oliLogo} alt="OLI logo" width={116} height={76} className="oli" />
-    <img src={kiltLogo} alt="Built on KILT" width={71} height={14} className="kilt" />
+    <img src={kiltLogo} alt="Built on KILT" width={142} height={28} className="kilt" />
   </section>;
 }
