@@ -2,6 +2,8 @@ import { type FormEvent, Fragment, useCallback, useEffect, useState } from 'reac
 import ky from 'ky';
 import { type DidUri, type KiltAddress } from '@kiltprotocol/sdk-js';
 import { useAsyncValue } from './useAsyncValue';
+import oliLogo from './OLI.png';
+import kiltLogo from './built-on-kilt.svg';
 
 const apiUrl = '/api/v1';
 
@@ -96,7 +98,7 @@ export function App() {
     <h1>OLI-Box</h1>
 
     <section>
-      <h2>Anlage</h2>
+      <h3>Anlage</h3>
       {boxDid && <p>✅️ Identifikator: {boxDid}</p>}
       {!boxDid && (
         <p>
@@ -117,7 +119,7 @@ export function App() {
     </section>
 
     <section>
-      <h2>Betreiber</h2>
+      <h3>Betreiber</h3>
       {address && (
         <p>
           {Object.entries(extensions).length === 0 && '❌️ KILT Wallet nicht vorhanden'}
@@ -140,5 +142,8 @@ export function App() {
         </p>
       )}
     </section>
+
+    <img src={oliLogo} alt="OLI logo" width={116} height={76} className="oli" />
+    <img src={kiltLogo} alt="Built on KILT" width={71} height={14} className="kilt" />
   </section>;
 }
