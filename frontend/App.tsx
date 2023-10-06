@@ -51,6 +51,7 @@ export function App() {
 
 
   const handleCreateBoxDIDClick = useCallback(async () => {
+    setProgress(0);
     const interval = setInterval(() => {
       setProgress((old) => old + 1);
     }, 1000);
@@ -81,6 +82,7 @@ export function App() {
       const { getSignedDidCreationExtrinsic } = window.kilt[name];
       const { signedExtrinsic } = await getSignedDidCreationExtrinsic(address);
 
+      setProgress(0);
       interval = setInterval(() => {
         setProgress((old) => old + 1);
       }, 1000);
