@@ -22,9 +22,25 @@ async function getExistingDid() {
   }
 }
 
+interface Claim {
+  Betreiber: string;
+  Adresse: string;
+}
+
+async function getClaim() {
+  try {
+    // return { Betreiber: 'OLI', Adresse: 'Musterstraße 1, 12345 Musterstadt' };
+    return await ky.get(`${apiUrl}/claim`).json<Claim>();
+  } catch (exception) {
+    console.error(exception);
+    return undefined;
+  }
+}
+
 export function App() {
   const [boxDid, setBoxDid] = useState<DidUri>();
   const [boxDidPending, setBoxDidPending] = useState(false);
+  const [claim, setClaim] = useState<Claim>();
   const [progress, setProgress] = useState(0);
 
   const address = useAsyncValue(getPaymentAddress, []);
@@ -46,6 +62,13 @@ export function App() {
     (async () => {
       const did = await getExistingDid();
       setBoxDid(did);
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const claim = await getClaim();
+      setClaim(claim);
     })();
   }, []);
 
@@ -96,6 +119,14 @@ export function App() {
     }
   }, [address]);
 
+  const handleClaimSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const json = Object.fromEntries(formData.entries()) as unknown as Claim;
+    await ky.post(`${apiUrl}/claim`, { json });
+    setClaim(json);
+  }, []);
+
   return <section>
     <h1>OLI Box</h1>
 
@@ -117,6 +148,23 @@ export function App() {
           )}
           {boxDidPending && <progress max={40} value={progress} />}
         </p>
+      )}
+
+      {claim && (
+        <Fragment>
+          <p>✅️ Betreiber: {claim.Betreiber}</p>
+          <p>✅️ Adresse: {claim.Adresse}</p>
+        </Fragment>
+      )}
+      {!claim && (
+        <form onSubmit={handleClaimSubmit}>
+          <fieldset>
+            <legend>Stammdatenzertifikat</legend>
+            <p><label>Betreiber: <input name="Betreiber" required /></label></p>
+            <p><label>Adresse: <input name="Adresse" required /></label></p>
+            <button type="submit">Anfordern</button>
+          </fieldset>
+        </form>
       )}
     </section>
 
