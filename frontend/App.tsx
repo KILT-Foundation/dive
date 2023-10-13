@@ -172,7 +172,12 @@ export function App() {
       <h3>Betreiber</h3>
       {address && (
         <p>
-          {Object.entries(extensions).length === 0 && '❌️ KILT Wallet nicht vorhanden'}
+          {Object.entries(extensions).length === 0 && (
+            <span>
+              ❌️ KILT Wallet nicht vorhanden, bitte installieren {' '}
+              <a href="https://www.sporran.org/" target="_blank" rel="noreferrer">Sporran</a>!
+            </span>
+          )}
 
           {!ownerDidPending && <Fragment>
             {Object.entries(extensions).map(([key, { name, getSignedDidCreationExtrinsic }]) => getSignedDidCreationExtrinsic && (
