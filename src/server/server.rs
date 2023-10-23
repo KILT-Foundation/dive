@@ -1,10 +1,17 @@
-use std::sync::{Mutex, Arc};
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use subxt::OnlineClient;
 
-use crate::{server::{routes::get_payment_account_address, Error}, crypto::manager::{KeyManager, PairKeyManager}, kilt::{KiltConfig, self}};
+use crate::{
+    crypto::manager::{KeyManager, PairKeyManager},
+    kilt::{self, KiltConfig},
+    server::{routes::get_payment_account_address, Error},
+};
 
 use super::routes::submit_extrinsic;
 
@@ -42,7 +49,18 @@ impl Server {
                         .route("/payment", web::get().to(get_payment_account_address))
                         .route("/payment", web::post().to(submit_extrinsic))
                         .route("/did", web::get().to(crate::server::routes::get_did))
-                        .route("/did", web::post().to(crate::server::routes::register_device_did))
+                        .route(
+                            "/did",
+                            web::post().to(crate::server::routes::register_device_did),
+                        )
+                        .route(
+                            "/claim",
+                            web::post().to(crate::server::routes::post_base_claim),
+                        )
+                        .route(
+                            "/claim",
+                            web::get().to(crate::server::routes::get_base_claim),
+                        ),
                 )
                 .service(fs::Files::new("/", &source_dir).index_file("index.html"))
         })

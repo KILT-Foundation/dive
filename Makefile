@@ -10,11 +10,11 @@ DEPLOY_TARGET_PORT=33920
 default: debug-build
 
 # shortcuts for building debug and release binaries
-debug-build: target/aarch64-unknown-linux-gnu/debug/dive
-release-build: target/aarch64-unknown-linux-gnu/release/dive
+debug-build: target/aarch64-unknown-linux-gnu/debug/ssi-server
+release-build: target/aarch64-unknown-linux-gnu/release/ssi-server
 
 # debug build through the build image
-target/aarch64-unknown-linux-gnu/debug/dive: .build-image $(shell find ./src -type f)
+target/aarch64-unknown-linux-gnu/debug/ssi-server: .build-image $(shell find ./src -type f)
 	podman run --rm -it \
 		-v $(shell pwd):/app \
 		-w /app \
@@ -22,7 +22,7 @@ target/aarch64-unknown-linux-gnu/debug/dive: .build-image $(shell find ./src -ty
 			cargo build --target=aarch64-unknown-linux-gnu
 
 # release build through the build image
-target/aarch64-unknown-linux-gnu/release/dive: .build-image $(shell find ./src -type f)
+target/aarch64-unknown-linux-gnu/release/ssi-server: .build-image $(shell find ./src -type f)
 	podman run --rm -it \
 		-v $(shell pwd):/app \
 		-w /app \
@@ -31,7 +31,7 @@ target/aarch64-unknown-linux-gnu/release/dive: .build-image $(shell find ./src -
 
 # deploy the release binary to the target host
 deploy: release-build
-	scp -P $(DEPLOY_TARGET_PORT) target/aarch64-unknown-linux-gnu/release/dive $(DEPLOY_TARGET_HOST):/home/pi/dive 
+	scp -P $(DEPLOY_TARGET_PORT) target/aarch64-unknown-linux-gnu/release/ssi-server $(DEPLOY_TARGET_HOST):/home/pi/ssi-server 
 
 # build the build image
 .build-image: builder.Containerfile
