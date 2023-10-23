@@ -8,6 +8,69 @@
     <script>
         window.kilt = {}
     </script>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            display: grid;
+            place-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+            margin: 0;
+            background-image: radial-gradient(#f69d3c, #3f87a6);
+        }
+
+        #root {
+            width: 30rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .box {
+            margin-block: 1rem;
+            border: 4px solid #798e84;
+            border-radius: 1rem;
+        }
+
+        .box h3 {
+            margin-top: 0;
+            background: #798e84;
+            padding-block: 0.25rem;
+            padding-inline: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .box p {
+            padding-inline: 0.5rem;
+        }
+
+        .init {
+            margin-left: 3rem;
+        }
+
+        fieldset {
+          margin: 0.5rem;
+          border-radius: 0.5rem;
+        }
+
+        label {
+          display: flex;
+          width: 17rem;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .oli {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+        }
+
+        .kilt {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div id="root"></div>
