@@ -14,24 +14,24 @@ debug-build: target/aarch64-unknown-linux-gnu/debug/ssi-server
 release-build: target/aarch64-unknown-linux-gnu/release/ssi-server
 
 # debug build through the build image
-target/aarch64-unknown-linux-gnu/debug/ssi-server: .build-image $(shell find ./src -type f)
-	cross build --target=aarch64-unknown-linux-gnu
 # target/aarch64-unknown-linux-gnu/debug/ssi-server: .build-image $(shell find ./src -type f)
-# 	podman run --rm -it \
-# 		-v $(shell pwd):/app \
-# 		-w /app \
-# 		$(BUILD_IMAGE) \
-# 			cargo build --target=aarch64-unknown-linux-gnu
+# 	cross build --target=aarch64-unknown-linux-gnu
+target/aarch64-unknown-linux-gnu/debug/ssi-server: .build-image $(shell find ./src -type f)
+	podman run --rm -it \
+		-v $(shell pwd):/app \
+		-w /app \
+		$(BUILD_IMAGE) \
+			cargo build --target=aarch64-unknown-linux-gnu
 
 # release build through the build image
-target/aarch64-unknown-linux-gnu/release/ssi-server: .build-image $(shell find ./src -type f)
-	cross build --release --target=aarch64-unknown-linux-gnu
 # target/aarch64-unknown-linux-gnu/release/ssi-server: .build-image $(shell find ./src -type f)
-# 	podman run --rm -it \
-# 		-v $(shell pwd):/app \
-# 		-w /app \
-# 		$(BUILD_IMAGE) \
-# 			cargo build --release --target=aarch64-unknown-linux-gnu
+#	cross build --release --target=aarch64-unknown-linux-gnu
+target/aarch64-unknown-linux-gnu/release/ssi-server: .build-image $(shell find ./src -type f)
+	podman run --rm -it \
+		-v $(shell pwd):/app \
+		-w /app \
+		$(BUILD_IMAGE) \
+			cargo build --release --target=aarch64-unknown-linux-gnu
 
 # deploy the release binary to the target host
 deploy: release-build
@@ -48,5 +48,5 @@ run-locally: debug-build
 
 # clean up the build artifacts
 clean:
-	rm -rf target
+	cargo clean
 	rm -f .build-image
