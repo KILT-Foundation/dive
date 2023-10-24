@@ -12,7 +12,7 @@ pub mod manager;
 #[serde(rename_all = "camelCase")]
 struct KeysFileStructure {
     payment_account_seed: String,
-    did_auth_seed: String,
+    pub did_auth_seed: String,
 }
 
 pub fn init_keys() -> Result<PairKeyManager, Box<dyn std::error::Error>> {
@@ -44,4 +44,25 @@ pub fn init_keys() -> Result<PairKeyManager, Box<dyn std::error::Error>> {
             PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
         Ok(manager)
     }
+}
+
+pub fn reset_did_keys() -> Result<(), Box<dyn std::error::Error>> {
+    let keys_file_path = "/etc/kilt/keys.json";
+
+    if std::path::Path::new(keys_file_path).exists() {
+        // init new keys for did
+        let hsm6 = ZkCtx::new()?;
+        let auth_random_seed = hsm6.get_random_bytes(32)?;
+        let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
+
+        //
+        let keys_file_json = std::fs::read_to_string(keys_file_path)?;
+        let mut keys_file: KeysFileStructure = serde_json::from_str(&keys_file_json)?;
+        keys_file.did_auth_seed = auth_mnemonic.to_string();
+
+        let keys_fil_json = serde_json::to_string_pretty(&keys_file)?;
+
+        std::fs::write(keys_file_path, keys_fil_json)?;
+    }
+    Ok(())
 }

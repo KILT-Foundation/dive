@@ -1285,6 +1285,7 @@ dependencies = [
  "serde_cbor",
  "serde_json",
  "serde_with",
+ "sha2 0.10.7",
  "sodiumoxide",
  "sp-core 22.0.0",
  "sp-runtime 25.0.0",

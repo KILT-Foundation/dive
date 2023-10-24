@@ -153,6 +153,12 @@ pub async fn post_base_claim(
     Ok(HttpResponse::Ok().json(json!({"base_claim": base_claim})))
 }
 
+pub async fn reset() -> Result<impl Responder, Error> {
+    crate::crypto::reset_did_keys()?;
+    std::fs::remove_file("base_claim.json")?;
+    Ok(HttpResponse::Ok())
+}
+
 struct BoxSigner(Box<dyn Signer<KiltConfig>>);
 
 impl Signer<KiltConfig> for BoxSigner {

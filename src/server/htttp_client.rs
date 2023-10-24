@@ -1,6 +1,10 @@
 use base64::{engine::general_purpose, Engine};
 use rand::{distributions::Alphanumeric, Rng};
-use reqwest::{header::AUTHORIZATION, StatusCode};
+use reqwest::{
+    header::{AUTHORIZATION, CONTENT_TYPE},
+    StatusCode,
+};
+use sha2::{Digest, Sha512};
 use subxt::{
     ext::{sp_core::crypto::Ss58Codec, sp_runtime::MultiSignature},
     tx::Signer,
@@ -9,7 +13,7 @@ use subxt::{
 use url::Url;
 
 use super::{
-    consts::{ATTESTER_ENDPOINT, OPEN_DID_ENDPOINT},
+    consts::{ATTESTER_ENDPOINT, CLIENT_ID, OPEN_DID_ENDPOINT},
     Error,
 };
 use crate::kilt::{get_did_doc, KiltConfig};
@@ -28,9 +32,11 @@ struct JWTBody {
     nonce: String,
 }
 
-pub async fn request_login_open_did() -> Result<(reqwest::Client, String), Error> {
-    // todo make env variable
-    let client_id = "default";
+pub fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
+    format!("0x{}", hex::encode(data.as_ref()))
+}
+
+pub async fn request_login() -> Result<(reqwest::Client, String), Error> {
     let nonce: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(7)
@@ -43,7 +49,7 @@ pub async fn request_login_open_did() -> Result<(reqwest::Client, String), Error
         .map(char::from)
         .collect();
 
-    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id=${}&redirect_uri=http://localhost:1606/callback.html&scope=openid&state=${}&nonce=${}", client_id, state, nonce );
+    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id=${}&redirect_uri=http://localhost:1606/callback.html&scope=openid&state=${}&nonce=${}", CLIENT_ID, state, nonce );
 
     let url = format!("{}{}", OPEN_DID_ENDPOINT, request_url);
 
@@ -54,12 +60,11 @@ pub async fn request_login_open_did() -> Result<(reqwest::Client, String), Error
     Ok((client, nonce))
 }
 
-// TODO: Error handling
 pub async fn login_to_open_did(
     cli: &OnlineClient<KiltConfig>,
     signer: Box<dyn Signer<KiltConfig>>,
 ) -> Result<String, Error> {
-    let (client, nonce) = request_login_open_did().await?;
+    let (client, nonce) = request_login().await?;
     let did_auth_account_id = signer.account_id();
     let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
     let did_doc = get_did_doc(&did, cli).await?;
@@ -84,10 +89,13 @@ pub async fn login_to_open_did(
     let jwt_header_encoded = general_purpose::STANDARD.encode(jwt_header_string);
     let jwt_body_encoded = general_purpose::STANDARD.encode(jwt_body_string);
 
-    let data_to_sign = format!("{}.{}", jwt_header_encoded, jwt_body_encoded);
-    let jwt_signature = signer.sign(data_to_sign.as_bytes());
+    let mut hasher = Sha512::new();
+    hasher.update(format!("{}.{}", jwt_header_encoded, jwt_body_encoded));
+    let data_to_sign_hex = hex_encode(hasher.finalize());
+    let data_to_sign = data_to_sign_hex.trim_start_matches("0x").as_bytes();
 
-    // TODO
+    let jwt_signature = signer.sign(data_to_sign);
+
     let jwt_signature_string = match jwt_signature {
         MultiSignature::Sr25519(sig) => String::from_utf8(sig.0.to_vec()),
         MultiSignature::Ed25519(sig) => String::from_utf8(sig.0.to_vec()),
@@ -137,10 +145,17 @@ pub struct AttestationRequest {
 
 pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Result<(), Error> {
     let mut headers = reqwest::header::HeaderMap::new();
-
     let auth_header_value = format!("Bearer {}", jwt_token);
-    let value = auth_header_value.parse().map_err(|_| Error::Unknown)?;
-    headers.insert(AUTHORIZATION, value);
+
+    headers.insert(
+        AUTHORIZATION,
+        auth_header_value.parse().map_err(|_| Error::Unknown)?,
+    );
+
+    headers.insert(
+        CONTENT_TYPE,
+        "application/json".parse().map_err(|_| Error::Unknown)?,
+    );
 
     let base_claim_json = serde_json::to_value(&base_claim)?;
 
@@ -156,11 +171,7 @@ pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Re
 
     let url = format!("{}/api/v1/attestation_request", ATTESTER_ENDPOINT,);
 
-    let response = client
-        .post(url)
-        .body(serde_json::to_string(&request_body)?)
-        .send()
-        .await?;
+    let response = client.post(url).json(&request_body).send().await?;
 
     if response.status() == StatusCode::OK {
         log::info!("Requested attestation");

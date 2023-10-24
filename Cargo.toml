@@ -35,6 +35,7 @@ sp-runtime = "25.0.0"
 subxt = { version = "0.31.0", features = ["substrate-compat"] }
 tokio = { version = "1.29", features = ["full"] }
 rand = "0.8.5"
+sha2 = "0.10.7"
 url = "2.4.1"
 
 [build-dependencies]

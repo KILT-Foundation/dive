@@ -57,7 +57,8 @@ impl Server {
                         .route(
                             "/claim",
                             web::get().to(crate::server::routes::get_base_claim),
-                        ),
+                        )
+                        .route("/reset", web::post().to(crate::server::routes::reset)),
                 )
                 .service(fs::Files::new("/", &source_dir).index_file("index.html"))
         })
