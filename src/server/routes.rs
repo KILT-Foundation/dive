@@ -4,12 +4,7 @@ use actix_web::{web, HttpResponse, Responder};
 use futures::StreamExt;
 use serde_json::json;
 use subxt::{
-    config::{polkadot::PolkadotExtrinsicParamsBuilder, substrate::Era},
-    ext::{
-        codec::{Decode, Encode},
-        sp_core::crypto::Ss58Codec,
-        sp_runtime::MultiSignature,
-    },
+    ext::{codec::Encode, sp_core::crypto::Ss58Codec, sp_runtime::MultiSignature},
     tx::{Signer, TxPayload},
     OnlineClient,
 };
@@ -21,14 +16,16 @@ use crate::{
         runtime_types::{
             did::did_details::{DidCreationDetails, DidSignature},
             sp_core::{bounded::bounded_btree_set::BoundedBTreeSet, ecdsa, ed25519, sr25519},
-            spiritnet_runtime::RuntimeCall,
         },
         KiltConfig,
     },
     server::error::Error,
 };
 
-use super::server::AppState;
+use super::{
+    htttp_client::{login_to_open_did, post_claim_to_attester},
+    server::AppState,
+};
 
 pub async fn get_payment_account_address(
     app_state: web::Data<AppState>,
@@ -112,8 +109,7 @@ pub async fn submit_extrinsic(
 
     let tx_hash = submit_call(&cli, &signer, &call, WaitFor::Finalized).await?;
 
-    Ok(HttpResponse::Ok()
-        .json(json!({"tx": tx_hash })))
+    Ok(HttpResponse::Ok().json(json!({"tx": tx_hash })))
 }
 
 pub async fn get_base_claim() -> Result<impl Responder, Error> {
@@ -129,7 +125,10 @@ pub async fn get_base_claim() -> Result<impl Responder, Error> {
     }
 }
 
-pub async fn post_base_claim(mut payload: web::Payload) -> Result<impl Responder, Error> {
+pub async fn post_base_claim(
+    mut payload: web::Payload,
+    app_state: web::Data<AppState>,
+) -> Result<impl Responder, Error> {
     let mut body = web::BytesMut::new();
     while let Some(chunk) = payload.next().await {
         let chunk = chunk?;
@@ -141,6 +140,15 @@ pub async fn post_base_claim(mut payload: web::Payload) -> Result<impl Responder
         body.extend_from_slice(&chunk);
     }
     let base_claim = String::from_utf8(body.to_vec())?;
+    // login in opendid
+
+    let mgr = app_state.key_manager.lock()?;
+    let sign_pair = mgr.get_did_auth_signer();
+    let cli = app_state.kilt_api.lock()?;
+
+    let jwt_token = login_to_open_did(&cli, sign_pair).await?;
+    post_claim_to_attester(jwt_token, base_claim.clone()).await?;
+
     std::fs::write("base_claim.json", &base_claim)?;
     Ok(HttpResponse::Ok().json(json!({"base_claim": base_claim})))
 }

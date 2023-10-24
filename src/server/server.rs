@@ -1,14 +1,11 @@
-use std::{
-    rc::Rc,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use subxt::OnlineClient;
 
 use crate::{
-    crypto::manager::{KeyManager, PairKeyManager},
+    crypto::manager::PairKeyManager,
     kilt::{self, KiltConfig},
     server::{routes::get_payment_account_address, Error},
 };

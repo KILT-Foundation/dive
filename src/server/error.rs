@@ -1,10 +1,12 @@
-use std::{sync::PoisonError, string::FromUtf8Error};
+use std::{string::FromUtf8Error, sync::PoisonError};
 
 use actix_web::error::PayloadError;
 
 pub enum Error {
     Unknown,
     Io(std::io::Error),
+    Http(reqwest::Error),
+    Json(serde_json::Error),
 }
 
 impl std::fmt::Debug for Error {
@@ -12,6 +14,8 @@ impl std::fmt::Debug for Error {
         match *self {
             Self::Unknown => write!(f, "unknown error"),
             Self::Io(ref err) => write!(f, "io error: {}", err),
+            Self::Http(ref err) => write!(f, "error in request {}", err),
+            Self::Json(ref err) => write!(f, "error in json {}", err),
         }
     }
 }
@@ -29,6 +33,8 @@ impl From<Error> for actix_web::Error {
         match err {
             Error::Unknown => actix_web::error::ErrorInternalServerError(err),
             Error::Io(err) => actix_web::error::ErrorInternalServerError(err),
+            Error::Http(err) => actix_web::error::ErrorInternalServerError(err),
+            Error::Json(err) => actix_web::error::ErrorInternalServerError(err),
         }
     }
 }
@@ -72,5 +78,17 @@ impl From<FromUtf8Error> for Error {
 impl From<hex::FromHexError> for Error {
     fn from(_err: hex::FromHexError) -> Self {
         Self::Unknown
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(value: reqwest::Error) -> Self {
+        Self::Http(value)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(value: serde_json::Error) -> Self {
+        Self::Json(value)
     }
 }
