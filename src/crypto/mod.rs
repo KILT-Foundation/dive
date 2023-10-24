@@ -1,11 +1,13 @@
 use std::str::FromStr;
 
-use self::{
-    device::{CryptoDevice, ZkCtx},
-    manager::PairKeyManager,
-};
+use self::manager::PairKeyManager;
 
+#[cfg(feature = "hsm6")]
 pub mod device;
+
+#[cfg(not(feature = "hsm6"))]
+use rand::Rng;
+
 pub mod manager;
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -15,14 +17,27 @@ struct KeysFileStructure {
     pub did_auth_seed: String,
 }
 
+#[cfg(feature = "hsm6")]
+fn get_random_bytes(num_bytes: i32) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let hsm6 = device::ZkCtx::new()?;
+    let random_bytes = hsm6.get_random_bytes(num_bytes)?;
+    Ok(random_bytes)
+}
+
+#[cfg(not(feature = "hsm6"))]
+fn get_random_bytes(_num_bytes: i32) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let mut random_bytes = vec![0u8; 32];
+    rand::thread_rng().fill(&mut random_bytes[..]);
+    Ok(random_bytes)
+}
+
 pub fn init_keys() -> Result<PairKeyManager, Box<dyn std::error::Error>> {
     // first check if keys are already initialized by checking /etc/kilt/keys.json file
     let keys_file_path = "/etc/kilt/keys.json";
     // check if file exists
     if !std::path::Path::new(keys_file_path).exists() {
-        let hsm6 = ZkCtx::new()?;
-        let payment_random_seed = hsm6.get_random_bytes(32)?;
-        let auth_random_seed = hsm6.get_random_bytes(32)?;
+        let payment_random_seed = get_random_bytes(32)?;
+        let auth_random_seed = get_random_bytes(32)?;
         let payment_mnemonic = bip39::Mnemonic::from_entropy(&payment_random_seed)?;
         let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
         let keys_file = KeysFileStructure {
@@ -51,8 +66,7 @@ pub fn reset_did_keys() -> Result<(), Box<dyn std::error::Error>> {
 
     if std::path::Path::new(keys_file_path).exists() {
         // init new keys for did
-        let hsm6 = ZkCtx::new()?;
-        let auth_random_seed = hsm6.get_random_bytes(32)?;
+        let auth_random_seed = get_random_bytes(32)?;
         let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
 
         //
