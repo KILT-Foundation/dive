@@ -127,6 +127,16 @@ export function App() {
     setClaim(json);
   }, []);
 
+  const handleResetClick = useCallback(() => {
+    if (!confirm('STOPP! Wirklich zurücksetzen?')) {
+      return;
+    }
+    (async () => {
+      await ky.delete('/did');
+      alert('Was haben wir getan? 😱️');
+    })();
+  }, [])
+
   return <section>
     <h1>OLI Box</h1>
 
@@ -200,5 +210,7 @@ export function App() {
 
     <img src={oliLogo} alt="OLI logo" width={116} height={76} className="oli" />
     <img src={kiltLogo} alt="Built on KILT" width={142} height={28} className="kilt" />
+
+    <button type="reset" onClick={handleResetClick}>Zurücksetzen</button>
   </section>;
 }
