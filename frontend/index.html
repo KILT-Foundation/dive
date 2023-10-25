@@ -20,7 +20,7 @@
         }
 
         #root {
-            width: 30rem;
+            width: 33rem;
             color: white;
             font-weight: bold;
         }
@@ -54,9 +54,32 @@
 
         label {
           display: flex;
-          width: 17rem;
+          width: 23rem;
           justify-content: space-between;
           align-items: center;
+        }
+
+        #credential {
+          float: right;
+        }
+
+        dialog {
+          width: 44rem;
+          margin-top: 10rem;
+        }
+
+        ::backdrop {
+          background-color: rgba(0 0 0 / 70%);
+        }
+
+        form[method="dialog"] {
+          text-align: right;
+        }
+
+        button[type="reset"] {
+          position: absolute;
+          bottom: 1rem;
+          left: 1rem;
         }
 
         .oli {
