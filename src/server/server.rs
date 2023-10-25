@@ -33,6 +33,7 @@ impl Server {
 
     pub async fn run(&self) -> Result<(), Error> {
         let source_dir = self.source_dir.clone();
+        println!("{}", source_dir);
         let api = kilt::connect("wss://spiritnet.kilt.io:443").await?;
         let app_state = AppState {
             key_manager: Arc::new(Mutex::new(crate::crypto::init_keys()?)),
@@ -45,6 +46,7 @@ impl Server {
                     web::scope("/api/v1")
                         .route("/payment", web::get().to(get_payment_account_address))
                         .route("/payment", web::post().to(submit_extrinsic))
+                        .route("/did", web::delete().to(crate::server::routes::reset))
                         .route("/did", web::get().to(crate::server::routes::get_did))
                         .route(
                             "/did",
@@ -57,8 +59,7 @@ impl Server {
                         .route(
                             "/claim",
                             web::get().to(crate::server::routes::get_base_claim),
-                        )
-                        .route("/reset", web::post().to(crate::server::routes::reset)),
+                        ),
                 )
                 .service(fs::Files::new("/", &source_dir).index_file("index.html"))
         })

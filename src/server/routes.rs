@@ -33,7 +33,7 @@ pub async fn get_payment_account_address(
     let mgr = app_state.key_manager.lock()?;
     let payment_account_id = mgr.get_payment_account_signer().account_id();
     let addr = payment_account_id.to_ss58check_with_version(38u16.into());
-    Ok(HttpResponse::Ok().json(json!({"address": addr})))
+    Ok(HttpResponse::Ok().json(json!({ "address": addr })))
 }
 
 pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, Error> {
@@ -46,7 +46,7 @@ pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, E
         .did(subxt::utils::AccountId32::from(did_auth_account_id));
     let result = cli.storage().at_latest().await?.fetch(&query).await?;
     match result {
-        Some(_) => Ok(HttpResponse::Ok().json(json!({"did": format!("did:kilt:{}", addr)}))),
+        Some(_) => Ok(HttpResponse::Ok().json(json!({ "did": format!("did:kilt:{}", addr) }))),
         None => Ok(HttpResponse::NotFound().finish()),
     }
 }
@@ -70,7 +70,6 @@ pub async fn register_device_did(app_state: web::Data<AppState>) -> Result<impl 
         MultiSignature::Ecdsa(sig) => DidSignature::Ecdsa(ecdsa::Signature(sig.0)),
     };
     let tx = kilt::tx().did().create(details, did_sig);
-
     let api = app_state.kilt_api.lock()?;
     let signer = BoxSigner(submitter_signer);
     let events = api
@@ -80,8 +79,9 @@ pub async fn register_device_did(app_state: web::Data<AppState>) -> Result<impl 
         .wait_for_finalized_success()
         .await?;
     println!("events: {:?}", events);
-    Ok(HttpResponse::Ok()
-        .json(json!({"tx": format!("0x{}", hex::encode(events.extrinsic_hash()) )})))
+    Ok(HttpResponse::Ok().json(json!({
+        "tx": format!("0x{}", hex::encode(events.extrinsic_hash()))
+    })))
 }
 
 const MAX_BODY_SIZE: usize = 262_144; // max payload size is 256k
@@ -109,7 +109,7 @@ pub async fn submit_extrinsic(
 
     let tx_hash = submit_call(&cli, &signer, &call, WaitFor::Finalized).await?;
 
-    Ok(HttpResponse::Ok().json(json!({"tx": tx_hash })))
+    Ok(HttpResponse::Ok().json(json!({ "tx": tx_hash })))
 }
 
 pub async fn get_base_claim() -> Result<impl Responder, Error> {
@@ -150,7 +150,7 @@ pub async fn post_base_claim(
     post_claim_to_attester(jwt_token, base_claim.clone()).await?;
 
     std::fs::write("base_claim.json", &base_claim)?;
-    Ok(HttpResponse::Ok().json(json!({"base_claim": base_claim})))
+    Ok(HttpResponse::Ok().json(json!({ "base_claim": base_claim })))
 }
 
 pub async fn reset() -> Result<impl Responder, Error> {

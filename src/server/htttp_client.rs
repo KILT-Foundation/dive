@@ -39,17 +39,17 @@ pub fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
 pub async fn request_login() -> Result<(reqwest::Client, String), Error> {
     let nonce: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
-        .take(7)
+        .take(12)
         .map(char::from)
         .collect();
 
     let state: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
-        .take(7)
+        .take(12)
         .map(char::from)
         .collect();
 
-    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id=${}&redirect_uri=http://localhost:1606/callback.html&scope=openid&state=${}&nonce=${}", CLIENT_ID, state, nonce );
+    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id={}&redirect_uri=http://localhost:3333&scope=openid&state={}&nonce={}", CLIENT_ID, state, nonce );
 
     let url = format!("{}{}", OPEN_DID_ENDPOINT, request_url);
 
@@ -58,6 +58,30 @@ pub async fn request_login() -> Result<(reqwest::Client, String), Error> {
     client.get(url).send().await?;
 
     Ok((client, nonce))
+}
+
+fn get_id_token(url_str: &str) -> Result<String, Error> {
+    if let Ok(url) = Url::parse(url_str) {
+        if let Some(fragment) = url.fragment() {
+            let id_token = fragment
+                .split('&')
+                .find(|segment| segment.starts_with("id_token="))
+                .map(|segment| &segment[9..]);
+
+            match id_token {
+                Some(token) => {
+                    return Ok(token.to_string());
+                }
+                None => {
+                    return Err(Error::Unknown);
+                }
+            }
+        } else {
+            return Err(Error::Unknown);
+        }
+    } else {
+        return Err(Error::Unknown);
+    }
 }
 
 pub async fn login_to_open_did(
@@ -69,12 +93,12 @@ pub async fn login_to_open_did(
     let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
     let did_doc = get_did_doc(&did, cli).await?;
 
-    let key_uri = did_doc.authentication_key.0;
+    let key_uri = hex_encode(did_doc.authentication_key.as_bytes());
 
     let jwt_header = JWTHeader {
         alg: "EdDSA".to_string(),
         typ: "JWT".to_string(),
-        key_uri: String::from_utf8(key_uri.to_vec())?,
+        key_uri,
     };
 
     let jwt_body = JWTBody {
@@ -97,11 +121,10 @@ pub async fn login_to_open_did(
     let jwt_signature = signer.sign(data_to_sign);
 
     let jwt_signature_string = match jwt_signature {
-        MultiSignature::Sr25519(sig) => String::from_utf8(sig.0.to_vec()),
-        MultiSignature::Ed25519(sig) => String::from_utf8(sig.0.to_vec()),
-        MultiSignature::Ecdsa(sig) => String::from_utf8(sig.0.to_vec()),
-    }
-    .map_err(|_| Error::Unknown)?;
+        MultiSignature::Sr25519(sig) => hex_encode(sig.0),
+        MultiSignature::Ed25519(sig) => hex_encode(sig.0),
+        MultiSignature::Ecdsa(sig) => hex_encode(sig.0),
+    };
 
     let jwt_signature_encoded = general_purpose::STANDARD.encode(jwt_signature_string);
 
@@ -124,23 +147,30 @@ pub async fn login_to_open_did(
         log::info!("Worked as expected");
         let location = res.headers().get("Location").ok_or(Error::Unknown)?;
         let url_response = location.to_str().map_err(|_| Error::Unknown)?;
-        let parsed_url = Url::parse(url_response).map_err(|_| Error::Unknown)?;
-        let jwt_token = parsed_url
-            .query_pairs()
-            .find(|(key, _)| key == "token")
-            .ok_or(Error::Unknown)?;
-        let token_value = jwt_token.1.to_string();
-        return Ok(token_value);
+        let token = get_id_token(url_response)?;
+        return Ok(token);
     } else {
         return Err(Error::Unknown);
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone)]
-pub struct AttestationRequest {
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct Claim {
+    #[serde(rename = "cTypeHash")]
     pub ctype_hash: String,
-    pub claim: serde_json::Value,
-    pub claimer: String,
+    contents: serde_json::Value,
+    pub owner: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Credential {
+    pub claim: Claim,
+    claim_nonce_map: serde_json::Value,
+    claim_hashes: Vec<String>,
+    delegation_id: Option<String>,
+    legitimations: Option<Vec<Credential>>,
+    pub root_hash: String,
 }
 
 pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Result<(), Error> {
@@ -157,13 +187,7 @@ pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Re
         "application/json".parse().map_err(|_| Error::Unknown)?,
     );
 
-    let base_claim_json = serde_json::to_value(&base_claim)?;
-
-    let request_body = AttestationRequest {
-        claim: base_claim_json,
-        ctype_hash: "placeholder".to_string(),
-        claimer: "placeholder".to_string(),
-    };
+    let base_claim_json = serde_json::from_str::<Credential>(&base_claim)?;
 
     let client = reqwest::Client::builder()
         .default_headers(headers)
@@ -171,7 +195,7 @@ pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Re
 
     let url = format!("{}/api/v1/attestation_request", ATTESTER_ENDPOINT,);
 
-    let response = client.post(url).json(&request_body).send().await?;
+    let response = client.post(url).json(&base_claim_json).send().await?;
 
     if response.status() == StatusCode::OK {
         log::info!("Requested attestation");
