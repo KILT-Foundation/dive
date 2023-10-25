@@ -79,6 +79,8 @@ export function App() {
 
   const address = useAsyncValue(getPaymentAddress, []);
   const [ownerDidPending, setOwnerDidPending] = useState(false);
+  const [ownerDIDReady, setOwnerDIDReady] = useState(false);
+  const [ownerDIDs, setOwnerDIDs] = useState<Array<{ did: DidUri; name?: string }>>([]);
   const [extensions, setExtensions] = useState(window.kilt);
 
   useEffect(() => {
@@ -152,11 +154,23 @@ export function App() {
       }, 1000);
 
       await ky.post(`${apiUrl}/payment`, { body: signedExtrinsic, timeout: false });
+
+      setOwnerDIDReady(true);
     } catch (error) {
       console.error(error);
     } finally {
       setOwnerDidPending(false);
       clearInterval(interval);
+    }
+  }, [address]);
+
+  const handleGetOwnerDIDsClick = useCallback(async (event: FormEvent<HTMLButtonElement>) => {
+    try {
+      const { name } = event.currentTarget;
+      const { getDidList } = window.kilt[name];
+      setOwnerDIDs(await getDidList());
+    } catch (error) {
+      console.error(error);
     }
   }, [address]);
 
@@ -216,15 +230,15 @@ export function App() {
             <p>
               ✅️ Zertifikat beglaubigt
               <button type="button" onClick={handleShowCredentialClick} id="credential">🔍️</button>
-              <dialog ref={credentialDialogRef}>
-                <a href="https://polkadot.js.org/apps/#/chainstate" target="_blank" rel="noreferrer">Polkadot</a>
-                <form method="dialog">
-                  <button type="submit">✖️</button>
-                </form>
-                <ReactJson src={credential} />
-              </dialog>
             </p>
           )}
+          <dialog ref={credentialDialogRef}>
+            <a href="https://polkadot.js.org/apps/#/chainstate" target="_blank" rel="noreferrer">Polkadot</a>
+            <form method="dialog">
+              <button type="submit">✖️</button>
+            </form>
+            <ReactJson src={credential} />
+          </dialog>
           {!credential && <p>💡️ Zertifikat in Bearbeitung</p>}
         </fieldset>
       )}
@@ -243,32 +257,50 @@ export function App() {
 
     <section className="box">
       <h3>Betreiber</h3>
-      {address && (
-        <p>
-          {Object.entries(extensions).length === 0 && (
-            <span>
-              ❌️ KILT Wallet nicht vorhanden, bitte installieren {' '}
-              <a href="https://www.sporran.org/" target="_blank" rel="noreferrer">Sporran</a>!
-            </span>
-          )}
+      {address && (<Fragment>
+        {Object.entries(extensions).length === 0 && (
+          <p>
+            ❌️ KILT Wallet nicht vorhanden, bitte installieren {' '}
+            <a href="https://www.sporran.org/" target="_blank" rel="noreferrer">Sporran</a>!
+          </p>
+        )}
 
-          {!ownerDidPending && <Fragment>
-            {Object.entries(extensions).map(([key, { name, getSignedDidCreationExtrinsic }]) => getSignedDidCreationExtrinsic && (
-              <button
-                type="button"
-                key={key}
-                name={key}
-                onClick={handleCreateOwnerDIDClick}
-                disabled={boxDidPending}
-              >
-                Identität erstellen mit {name}
-              </button>
-            ))}
-          </Fragment>}
+        {!ownerDidPending && <p>
+          {Object.entries(extensions).map(([key, { name, getSignedDidCreationExtrinsic }]) => getSignedDidCreationExtrinsic && (
+            <button
+              type="button"
+              key={key}
+              name={key}
+              onClick={handleCreateOwnerDIDClick}
+              disabled={boxDidPending}
+            >
+              Identität erstellen mit {name}
+            </button>
+          ))}
+        </p>}
 
-          {ownerDidPending && <progress max={40} value={progress} />}
-        </p>
-      )}
+        {ownerDidPending && <p><progress max={40} value={progress} /></p>}
+
+        {ownerDIDReady && <p>
+          {Object.entries(extensions).map(([key, { name, getDidList }]) => getDidList && (
+            <button
+              type="button"
+              key={key}
+              name={key}
+              onClick={handleGetOwnerDIDsClick}
+              disabled={boxDidPending}
+            >
+              Identität abfragen von {name}
+            </button>
+          ))}
+        </p>}
+
+        {ownerDIDs.length > 0 &&
+          <ul>
+            {ownerDIDs.map(({ did, name }) => <li key={did}>{did} {name && `(${name})`}</li>)}
+          </ul>
+        }
+      </Fragment>)}
     </section>
 
     <img src={oliLogo} alt="OLI logo" width={116} height={76} className="oli" />
