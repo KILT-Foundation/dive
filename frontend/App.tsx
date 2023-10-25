@@ -9,12 +9,14 @@ import kiltLogo from './built-on-kilt.svg';
 const apiUrl = '/api/v1';
 
 async function getPaymentAddress() {
+  // return '4tTFsj531ZFqyhdYnWmzKU3gWGN68qYPBSKkB7UJ5XZWCAyg' as KiltAddress;
   const { address } = await ky.get(`${apiUrl}/payment`).json<{ address: KiltAddress }>();
   return address;
 }
 
 async function getExistingDid() {
   try {
+    // return 'did:kilt:4rrkiRTZgsgxjJDFkLsivqqKTqdUTuxKk3FX3mKFAeMxsR5E';
     const { did } = await ky.get(`${apiUrl}/did`).json<{ did: DidUri }>();
     return did;
   } catch (exception) {
@@ -24,13 +26,18 @@ async function getExistingDid() {
 }
 
 interface Claim {
-  Betreiber: string;
-  Adresse: string;
+  'Art der Anlage': string;
+  'Nennleistung (kW)': string;
+  Standort: string;
 }
 
 async function getClaim() {
   try {
-    // return { Betreiber: 'OLI', Adresse: 'Musterstraße 1, 12345 Musterstadt' };
+    // return {
+    //   'Art der Anlage': 'OLI',
+    //   'Nennleistung (kW)': '120',
+    //   Standort: 'Musterstraße 1, 12345 Musterstadt',
+    // };
     return await ky.get(`${apiUrl}/claim`).json<Claim>();
   } catch (exception) {
     console.error(exception);
@@ -200,12 +207,14 @@ export function App() {
       )}
 
       {claim && (
-        <Fragment>
-          <p>✅️ Betreiber: {claim.Betreiber}</p>
-          <p>✅️ Adresse: {claim.Adresse}</p>
+        <fieldset>
+          <legend>DIVE Anlagenzertifikat</legend>
+          <p>✅️ Art der Anlage: {claim['Art der Anlage']}</p>
+          <p>✅️ Nennleistung (kW): {claim['Nennleistung (kW)']}</p>
+          <p>✅️ Standort: {claim.Standort}</p>
           {credential && (
             <p>
-              Zertifikat beglaubigt
+              ✅️ Zertifikat beglaubigt
               <button type="button" onClick={handleShowCredentialClick} id="credential">🔍️</button>
               <dialog ref={credentialDialogRef}>
                 <a href="https://polkadot.js.org/apps/#/chainstate" target="_blank" rel="noreferrer">Polkadot</a>
@@ -216,15 +225,16 @@ export function App() {
               </dialog>
             </p>
           )}
-          {!credential && <p>Zertifikat in Bearbeitung</p>}
-        </Fragment>
+          {!credential && <p>💡️ Zertifikat in Bearbeitung</p>}
+        </fieldset>
       )}
       {!claim && (
         <form onSubmit={handleClaimSubmit}>
           <fieldset>
-            <legend>Stammdatenzertifikat</legend>
-            <p><label>Betreiber: <input name="Betreiber" required /></label></p>
-            <p><label>Adresse: <input name="Adresse" required /></label></p>
+            <legend>DIVE Anlagenzertifikat</legend>
+            <p><label>Art der Anlage: <input name="Art der Anlage" required /></label></p>
+            <p><label>Nennleistung (kW): <input name="Nennleistung (kW)" required /></label></p>
+            <p><label>Standort: <input name="Standort" required /></label></p>
             <button type="submit">Anfordern</button>
           </fieldset>
         </form>
