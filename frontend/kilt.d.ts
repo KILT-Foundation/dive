@@ -1,4 +1,4 @@
-import { type HexString, type KiltAddress } from '@kiltprotocol/sdk-js';
+import { type DidUri, type HexString, type KiltAddress } from '@kiltprotocol/sdk-js';
 
 export {};
 
@@ -9,6 +9,7 @@ declare global {
       {
         name?: string;
         getSignedDidCreationExtrinsic?: (submitter: KiltAddress) => Promise<{ signedExtrinsic: HexString }>
+        getDidList?: () => Promise<Array<{ did: DidUri; name?: string }>>;
       }
     >;
   }
