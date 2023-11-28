@@ -21,6 +21,7 @@ pub struct Server {
 pub struct AppState {
     pub key_manager: Arc<Mutex<PairKeyManager>>,
     pub kilt_api: Arc<Mutex<OnlineClient<KiltConfig>>>,
+    pub credential_id: String,
 }
 
 impl Server {
@@ -33,12 +34,14 @@ impl Server {
 
     pub async fn run(&self) -> Result<(), Error> {
         let source_dir = self.source_dir.clone();
-        println!("{}", source_dir);
         let api = kilt::connect("wss://spiritnet.kilt.io:443").await?;
         let app_state = AppState {
             key_manager: Arc::new(Mutex::new(crate::crypto::init_keys()?)),
             kilt_api: Arc::new(Mutex::new(api)),
+            credential_id: "".to_string(),
         };
+
+        println!("{}", source_dir);
         HttpServer::new(move || {
             App::new()
                 .app_data(web::Data::new(app_state.clone()))
@@ -48,6 +51,10 @@ impl Server {
                         .route("/payment", web::post().to(submit_extrinsic))
                         .route("/did", web::delete().to(crate::server::routes::reset))
                         .route("/did", web::get().to(crate::server::routes::get_did))
+                        .route(
+                            "/credential",
+                            web::get().to(crate::server::routes::get_credential),
+                        )
                         .route(
                             "/did",
                             web::post().to(crate::server::routes::register_device_did),

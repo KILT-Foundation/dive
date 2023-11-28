@@ -1,22 +1,39 @@
 import { type FormEvent, Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import ReactJson from 'react-json-view';
 import ky from 'ky';
-import { type DidUri, type KiltAddress, type ICredential } from '@kiltprotocol/sdk-js';
+import { type DidUri, type KiltAddress, type ICredential, Credential, IClaim, IClaimContents, Claim, ICType, CType } from '@kiltprotocol/core';
 import { useAsyncValue } from './useAsyncValue';
 import oliLogo from './OLI.png';
 import kiltLogo from './built-on-kilt.svg';
 
+const ctype = {
+  "$id": "kilt:ctype:0xc945ec1d1bc96dcef2c6f1198047c2be7edf7beb5f82c418a19c6614033c6256",
+  "$schema": "ipfs://bafybeiah66wbkhqbqn7idkostj2iqyan2tstc4tpqt65udlhimd7hcxjyq/",
+  "additionalProperties": false,
+  "properties": {
+    "Art der Anlage": {
+      "type": "string"
+    },
+    "Nennleistung (kW)": {
+      "type": "number"
+    },
+    "Standort": {
+      "type": "string"
+    }
+  },
+  "title": "DIVE Anlagenzertifikat",
+  "type": "object"
+} as ICType
 const apiUrl = '/api/v1';
 
 async function getPaymentAddress() {
-  // return '4tTFsj531ZFqyhdYnWmzKU3gWGN68qYPBSKkB7UJ5XZWCAyg' as KiltAddress;
   const { address } = await ky.get(`${apiUrl}/payment`).json<{ address: KiltAddress }>();
   return address;
 }
 
 async function getExistingDid() {
   try {
-    // return 'did:kilt:4rrkiRTZgsgxjJDFkLsivqqKTqdUTuxKk3FX3mKFAeMxsR5E';
+
     const { did } = await ky.get(`${apiUrl}/did`).json<{ did: DidUri }>();
     return did;
   } catch (exception) {
@@ -33,12 +50,9 @@ interface Claim {
 
 async function getClaim() {
   try {
-    // return {
-    //   'Art der Anlage': 'OLI',
-    //   'Nennleistung (kW)': '120',
-    //   Standort: 'Musterstraße 1, 12345 Musterstadt',
-    // };
-    return await ky.get(`${apiUrl}/claim`).json<Claim>();
+    const res = await ky.get(`${apiUrl}/claim`).json();
+    const requestedCredential = JSON.parse(res.base_claim);
+    return requestedCredential.claim.contents;[]
   } catch (exception) {
     console.error(exception);
     return undefined;
@@ -47,23 +61,15 @@ async function getClaim() {
 
 async function getCredential() {
   try {
-    // return {
-    //   'claim': {
-    //     'cTypeHash': '0xad52bd7a8bd8a52e03181a99d2743e00d0a5e96fdc0182626655fcf0c0a776d0',
-    //     'contents': { 'Username': 'arty-name', 'User ID': '133055' },
-    //     'owner': 'did:kilt:4rrkiRTZgsgxjJDFkLsivqqKTqdUTuxKk3FX3mKFAeMxsR5E',
-    //   },
-    //   'legitimations': [],
-    //   'claimHashes': ['0x73ab53e3e87960ae33b827d8bde3fee2717cfd5af2841d7dfc163a0eeed85474', '0xbd0d90cff6b3784e9e53afb0499076902c677c992c472b9f4aac87fe0f700709', '0xfacb2590ec33b9c5c1cd37bc5da8023629052d1fd593f4b9fb5c3271e7bee146'],
-    //   'claimNonceMap': {
-    //     '0x39df1673e48bcdf17a1eff936fbe2460555de5bdc029b515afd25bb81012ebcd': '56ea4c72-caa8-425a-9def-fa5ea5571fcc',
-    //     '0xc9cccabfbfc0c529263c97d9775ed8297df7832d53948229c7282667c2d15f7c': 'd6faf781-9a0c-4f10-a58d-591f35f3f6ad',
-    //     '0x800e8346b87610819d18304201c9aaee24ef2f69769e86713928937e37ffff99': '4a4d173c-c348-4c24-b974-9c6e84817a92',
-    //   },
-    //   'rootHash': '0x202b70def75caa7d2130524b12d759e711ebf75960e838cbbc27d657560e6675',
-    //   'delegationId': null,
-    // } as ICredential;
-    return await ky.get(`${apiUrl}/credential`).json<ICredential>();
+    let response = await ky.get(`${apiUrl}/credential`).json<ICredential>();
+
+    let data = response[0];
+    console.log(data, data.approved, data.credential)
+    if (!data.approved) {
+      return undefined
+    }
+
+    return data.credential
   } catch (exception) {
     console.error(exception);
     return undefined;
@@ -90,7 +96,7 @@ export function App() {
     window.addEventListener('kilt-extension#initialized', initialize);
     window.dispatchEvent(new CustomEvent('kilt-dapp#initialized'));
     return () => {
-        window.removeEventListener('kilt-extension#initialized', initialize);
+      window.removeEventListener('kilt-extension#initialized', initialize);
     }
   }, []);
 
@@ -104,6 +110,7 @@ export function App() {
   useEffect(() => {
     (async () => {
       const claim = await getClaim();
+      console.log(claim);
       setClaim(claim);
     })();
   }, []);
@@ -131,6 +138,7 @@ export function App() {
     } finally {
       setBoxDidPending(false);
       clearInterval(interval);
+      window.location.reload()
     }
   }, []);
 
@@ -154,6 +162,7 @@ export function App() {
       }, 1000);
 
       await ky.post(`${apiUrl}/payment`, { body: signedExtrinsic, timeout: false });
+      confirm('Did is created!')
 
       setOwnerDIDReady(true);
     } catch (error) {
@@ -177,10 +186,23 @@ export function App() {
   const handleClaimSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const json = Object.fromEntries(formData.entries()) as unknown as Claim;
-    await ky.post(`${apiUrl}/claim`, { json });
-    setClaim(json);
-  }, []);
+    const json = Object.fromEntries(formData.entries());
+
+
+    const newJson = {
+      'Art der Anlage': json['Art der Anlage'],
+      'Nennleistung (kW)': parseInt(json['Nennleistung (kW)'] as string, 10),
+      Standort: json["Standort"],
+    }
+
+    console.log(newJson, boxDid)
+
+    const newClaim = Claim.fromCTypeAndClaimContents(ctype, newJson, boxDid)
+    const newCredential = Credential.fromClaim(newClaim);
+
+    let claim = await ky.post(`${apiUrl}/claim`, { json: newCredential });
+    setClaim(claim);
+  }, [boxDid]);
 
   const credentialDialogRef = useRef<HTMLDialogElement>();
   const handleShowCredentialClick = useCallback(() => {
@@ -192,8 +214,8 @@ export function App() {
       return;
     }
     (async () => {
-      await ky.delete('/did');
-      alert('Was haben wir getan? 😱️');
+      await ky.delete('/api/v1/did');
+      window.location.reload()
     })();
   }, [])
 
@@ -216,7 +238,7 @@ export function App() {
               Identität erstellen!
             </button>
           )}
-          {boxDidPending && <progress max={40} value={progress} />}
+          {boxDidPending && <progress max={60} value={progress} />}
         </p>
       )}
 

@@ -23,7 +23,7 @@ use crate::{
 };
 
 use super::{
-    htttp_client::{login_to_open_did, post_claim_to_attester},
+    htttp_client::{get_credential_request, login_to_open_did, post_claim_to_attester},
     server::AppState,
 };
 
@@ -130,6 +130,7 @@ pub async fn post_base_claim(
     app_state: web::Data<AppState>,
 ) -> Result<impl Responder, Error> {
     let mut body = web::BytesMut::new();
+
     while let Some(chunk) = payload.next().await {
         let chunk = chunk?;
         // limit max size of in-memory payload
@@ -140,23 +141,40 @@ pub async fn post_base_claim(
         body.extend_from_slice(&chunk);
     }
     let base_claim = String::from_utf8(body.to_vec())?;
-    // login in opendid
 
     let mgr = app_state.key_manager.lock()?;
     let sign_pair = mgr.get_did_auth_signer();
     let cli = app_state.kilt_api.lock()?;
 
+    println!("ich bin hier");
+
     let jwt_token = login_to_open_did(&cli, sign_pair).await?;
+    println!("token {}", jwt_token);
+
     post_claim_to_attester(jwt_token, base_claim.clone()).await?;
 
     std::fs::write("base_claim.json", &base_claim)?;
     Ok(HttpResponse::Ok().json(json!({ "base_claim": base_claim })))
 }
 
-pub async fn reset() -> Result<impl Responder, Error> {
-    crate::crypto::reset_did_keys()?;
-    std::fs::remove_file("base_claim.json")?;
+pub async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, Error> {
+    let manager = crate::crypto::reset_did_keys()?;
+    let remove_file = std::fs::remove_file("base_claim.json");
+    if remove_file.is_err() {
+        println!("No claim to delete");
+    }
+    let mut app_manager = app_state.key_manager.lock().unwrap();
+    *app_manager = manager;
     Ok(HttpResponse::Ok())
+}
+
+pub async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Responder, Error> {
+    let mgr = app_state.key_manager.lock()?;
+    let sign_pair = mgr.get_did_auth_signer();
+    let cli = app_state.kilt_api.lock()?;
+    let jwt_token = login_to_open_did(&cli, sign_pair).await?;
+    let data = get_credential_request(jwt_token).await?;
+    Ok(HttpResponse::Ok().json(data))
 }
 
 struct BoxSigner(Box<dyn Signer<KiltConfig>>);
@@ -232,17 +250,21 @@ async fn submit_call(
         match status {
             subxt::tx::TxStatus::Future => {
                 log::info!("Transaction is in the future queue");
+                println!("transaction in future queue");
             }
             subxt::tx::TxStatus::Ready => {
                 log::info!("Extrinsic is ready");
+                println!("transaction ready");
             }
             subxt::tx::TxStatus::Broadcast(peers) => {
                 log::info!("Extrinsic broadcasted to {:?}", peers);
+                println!("transaction broadcasted");
                 if wait_for == WaitFor::Submitted {
                     return Ok(format!("0x{}", hex::encode(progress.extrinsic_hash())));
                 }
             }
             subxt::tx::TxStatus::InBlock(status) => {
+                println!("transaction in block");
                 log::info!("Extrinsic included in block {:?}", status.block_hash());
                 let events = status.fetch_events().await?;
                 events.iter().for_each(|e| {
@@ -260,27 +282,34 @@ async fn submit_call(
                 }
             }
             subxt::tx::TxStatus::Retracted(hash) => {
+                println!("transaction retracted");
                 log::info!("Extrinsic retracted from block {:?}", hash);
             }
             subxt::tx::TxStatus::Finalized(status) => {
+                println!("transaction finalized");
                 log::info!("Extrinsic finalized in block {:?}", status.block_hash());
                 if wait_for == WaitFor::Finalized {
                     return Ok(format!("0x{}", hex::encode(progress.extrinsic_hash())));
                 }
             }
             subxt::tx::TxStatus::Usurped(hash) => {
+                println!("transaction usurped");
                 log::info!("Extrinsic usurped in block {:?}", hash);
             }
             subxt::tx::TxStatus::Dropped => {
+                println!("transaction dropped");
                 log::info!("Extrinsic dropped");
             }
             subxt::tx::TxStatus::Invalid => {
+                println!("transaction invalid");
                 log::info!("Extrinsic invalid");
             }
             subxt::tx::TxStatus::FinalityTimeout(hash) => {
+                println!("transaction time out");
                 log::info!("Extrinsic finality timeout in block {:?}", hash);
             }
         }
     }
+    println!("transaction finished");
     Ok(format!("0x{}", hex::encode(progress.extrinsic_hash())))
 }

@@ -1,111 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script>
-        window.kilt = {}
-    </script>
-    <style>
-        body {
-            font-family: system-ui, sans-serif;
-            display: grid;
-            place-items: center;
-            height: 100vh;
-            box-sizing: border-box;
-            margin: 0;
-            background-image: radial-gradient(#f69d3c, #3f87a6);
-        }
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script type="module">
+    window.kilt = {}
+  </script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      box-sizing: border-box;
+      margin: 0;
+      background-image: radial-gradient(#f69d3c, #3f87a6);
+    }
 
-        #root {
-            width: 36rem;
-            color: white;
-            font-weight: bold;
-        }
+    #root {
+      width: 36rem;
+      color: white;
+      font-weight: bold;
+    }
 
-        .box {
-            margin-block: 1rem;
-            border: 4px solid #798e84;
-            border-radius: 1rem;
-        }
+    .box {
+      margin-block: 1rem;
+      border: 4px solid #798e84;
+      border-radius: 1rem;
+    }
 
-        .box h3 {
-            margin-top: 0;
-            background: #798e84;
-            padding-block: 0.25rem;
-            padding-inline: 0.5rem;
-            font-size: 1rem;
-        }
+    .box h3 {
+      margin-top: 0;
+      background: #798e84;
+      padding-block: 0.25rem;
+      padding-inline: 0.5rem;
+      font-size: 1rem;
+    }
 
-        .box p {
-            padding-inline: 0.5rem;
-        }
+    .box p {
+      padding-inline: 0.5rem;
+    }
 
-        .init {
-            margin-left: 3rem;
-        }
+    .init {
+      margin-left: 3rem;
+    }
 
-        fieldset {
-          margin: 0.5rem;
-          border-radius: 0.5rem;
-        }
+    fieldset {
+      margin: 0.5rem;
+      border-radius: 0.5rem;
+    }
 
-        label {
-          display: flex;
-          width: 23rem;
-          justify-content: space-between;
-          align-items: center;
-        }
+    label {
+      display: flex;
+      width: 23rem;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        #credential {
-          float: right;
-        }
+    #credential {
+      float: right;
+    }
 
-        dialog {
-          width: 44rem;
-          margin-top: 10rem;
-        }
+    dialog {
+      width: 44rem;
+      margin-top: 10rem;
+    }
 
-        ::backdrop {
-          background-color: rgba(0 0 0 / 70%);
-        }
+    ::backdrop {
+      background-color: rgba(0 0 0 / 70%);
+    }
 
-        form[method="dialog"] {
-          text-align: right;
-        }
+    form[method="dialog"] {
+      text-align: right;
+    }
 
-        ul {
-          list-style: none;
-          padding-inline: 0.5rem;
-        }
+    ul {
+      list-style: none;
+      padding-inline: 0.5rem;
+    }
 
-        li {
-          margin-block: 0.5rem;
-        }
+    li {
+      margin-block: 0.5rem;
+    }
 
-        button[type="reset"] {
-          position: absolute;
-          bottom: 1rem;
-          left: 1rem;
-        }
+    button[type="reset"] {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+    }
 
-        .oli {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-        }
+    .oli {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+    }
 
-        .kilt {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-        }
-    </style>
+    .kilt {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+    }
+  </style>
 </head>
+
 <body>
-    <div id="root"></div>
-    <script src="./index.tsx"></script>
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
 </body>
+
 </html>

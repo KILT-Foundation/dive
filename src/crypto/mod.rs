@@ -1,6 +1,5 @@
-use std::str::FromStr;
-
 use self::manager::PairKeyManager;
+use std::str::FromStr;
 
 #[cfg(feature = "hsm6")]
 pub mod device;
@@ -61,22 +60,29 @@ pub fn init_keys() -> Result<PairKeyManager, Box<dyn std::error::Error>> {
     }
 }
 
-pub fn reset_did_keys() -> Result<(), Box<dyn std::error::Error>> {
+pub fn reset_did_keys() -> Result<PairKeyManager, Box<dyn std::error::Error>> {
     let keys_file_path = "/etc/kilt/keys.json";
+
+    println!("ich bin hier");
 
     if std::path::Path::new(keys_file_path).exists() {
         // init new keys for did
         let auth_random_seed = get_random_bytes(32)?;
         let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
 
-        //
         let keys_file_json = std::fs::read_to_string(keys_file_path)?;
         let mut keys_file: KeysFileStructure = serde_json::from_str(&keys_file_json)?;
         keys_file.did_auth_seed = auth_mnemonic.to_string();
-
         let keys_fil_json = serde_json::to_string_pretty(&keys_file)?;
-
         std::fs::write(keys_file_path, keys_fil_json)?;
+        let payment_mnemonic = bip39::Mnemonic::from_str(&keys_file.payment_account_seed)?;
+        let auth_mnemonic = bip39::Mnemonic::from_str(&keys_file.did_auth_seed)?;
+        let manager =
+            PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
+        return Ok(manager);
     }
-    Ok(())
+    return Err(Box::new(std::io::Error::new(
+        std::io::ErrorKind::NotFound,
+        "Keys file not found",
+    )));
 }

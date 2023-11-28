@@ -173,8 +173,19 @@ pub struct Credential {
     pub root_hash: String,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct AttestationResponse {
+    pub id: String,
+    pub approved: bool,
+    pub revoked: bool,
+    pub ctype_hash: String,
+    pub credential: serde_json::Value,
+    pub claimer: String,
+}
+
 pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Result<(), Error> {
     let mut headers = reqwest::header::HeaderMap::new();
+
     let auth_header_value = format!("Bearer {}", jwt_token);
 
     headers.insert(
@@ -199,9 +210,38 @@ pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Re
 
     if response.status() == StatusCode::OK {
         log::info!("Requested attestation");
+
         return Ok(());
     } else {
         log::info!("did not worked");
         return Err(Error::Unknown);
     }
+}
+
+pub async fn get_credential_request(jwt_token: String) -> Result<serde_json::Value, Error> {
+    let mut headers = reqwest::header::HeaderMap::new();
+
+    let auth_header_value = format!("Bearer {}", jwt_token);
+
+    headers.insert(
+        AUTHORIZATION,
+        auth_header_value.parse().map_err(|_| Error::Unknown)?,
+    );
+
+    headers.insert(
+        CONTENT_TYPE,
+        "application/json".parse().map_err(|_| Error::Unknown)?,
+    );
+
+    let client = reqwest::Client::builder()
+        .default_headers(headers)
+        .build()?;
+
+    let url = format!("{}/api/v1/attestation_request", ATTESTER_ENDPOINT,);
+
+    let response = client.get(url).send().await?;
+
+    let data = response.json::<serde_json::Value>().await?;
+
+    Ok(data)
 }

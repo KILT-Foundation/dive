@@ -8,15 +8,19 @@
     "build": "parcel build index.html"
   },
   "devDependencies": {
+    "@types/babel-types": "7.0.13",
     "@types/react": "^18.2.25",
-    "parcel-bundler": "^1.12.5",
+    "parcel": "^2.0.0",
+    "process": "^0.11.10",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@kiltprotocol/sdk-js": "^0.34.0",
+    "@kiltprotocol/core": "^0.34.0",
+    "@types/react-dom": "^18.2.14",
     "ky": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-json-view": "^1.21.3"
+    "react-json-view": "^1.21.3",
+    "ts-node": "^10.9.1"
   }
 }

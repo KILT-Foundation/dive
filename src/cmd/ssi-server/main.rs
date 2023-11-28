@@ -7,7 +7,7 @@ use dive::{kilt, server};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _api = kilt::connect("wss://spiritnet.kilt.io:443").await?;
+    let _api = kilt::connect("wss://spiritnet.api.onfinality.io:443/public-ws").await?;
     println!("connected to spiritnet");
     let keys = init_keys()?;
     let payment_account_id = keys.get_payment_account_signer().account_id();
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let web_port: u16 = 3333;
-    let web_root = "/home/adel/dive/frontend/";
+    let web_root = "/home/adel/dive/frontend/dist";
     println!("starting server on port {}", web_port);
     let server = server::Server::new(web_port, web_root);
     server.run().await?;
