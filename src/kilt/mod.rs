@@ -1,12 +1,12 @@
+pub mod did_helper;
+pub mod error;
+pub mod tx;
+
 use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
 use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config, OnlineClient};
 
-#[subxt::subxt(runtime_metadata_path = "./metadata.scale")]
-pub mod kilt {}
-pub use kilt::*;
-
-pub mod did_helper;
-pub use did_helper::*;
+#[subxt::subxt(runtime_metadata_path = "./spiritnet_1210.scale")]
+pub mod runtime {}
 
 pub const SS58_PREFIX: u16 = 38u16;
 
@@ -22,9 +22,7 @@ impl Config for KiltConfig {
     type ExtrinsicParams = PolkadotExtrinsicParams<Self>;
 }
 
-pub async fn connect(
-    endpoint: &str,
-) -> Result<OnlineClient<KiltConfig>, Box<dyn std::error::Error>> {
+pub async fn connect(endpoint: &str) -> Result<OnlineClient<KiltConfig>, error::TxError> {
     let endpoint_url = match endpoint {
         "spiritnet" => "wss://spiritnet.kilt.io:443",
         "peregrine" => "wss://peregrine.kilt.io:443/parachain-public-ws",

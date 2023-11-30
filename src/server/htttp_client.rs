@@ -12,31 +12,20 @@ use subxt::{
 };
 use url::Url;
 
-use super::{
-    consts::{ATTESTER_ENDPOINT, CLIENT_ID, OPEN_DID_ENDPOINT},
-    Error,
+use super::dto::*;
+use crate::{
+    kilt::{did_helper::get_did_doc, KiltConfig},
+    server::error::ServerError,
 };
-use crate::kilt::{get_did_doc, KiltConfig};
-
-#[derive(serde::Deserialize, serde::Serialize)]
-struct JWTHeader {
-    alg: String,
-    typ: String,
-    key_uri: String,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-struct JWTBody {
-    iss: String,
-    sub: String,
-    nonce: String,
-}
 
 pub fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
     format!("0x{}", hex::encode(data.as_ref()))
 }
 
-pub async fn request_login() -> Result<(reqwest::Client, String), Error> {
+pub async fn request_login(
+    client_id: &str,
+    auth_endpoint: &str,
+) -> Result<(reqwest::Client, String), ServerError> {
     let nonce: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(12)
@@ -49,9 +38,9 @@ pub async fn request_login() -> Result<(reqwest::Client, String), Error> {
         .map(char::from)
         .collect();
 
-    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id={}&redirect_uri=http://localhost:3333&scope=openid&state={}&nonce={}", CLIENT_ID, state, nonce );
+    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id={}&redirect_uri=http://localhost:3333&scope=openid&state={}&nonce={}", client_id, state, nonce );
 
-    let url = format!("{}{}", OPEN_DID_ENDPOINT, request_url);
+    let url = format!("{}{}", auth_endpoint, request_url);
 
     let client = reqwest::Client::builder().cookie_store(true).build()?;
 
@@ -60,7 +49,7 @@ pub async fn request_login() -> Result<(reqwest::Client, String), Error> {
     Ok((client, nonce))
 }
 
-fn get_id_token(url_str: &str) -> Result<String, Error> {
+fn get_id_token(url_str: &str) -> Result<String, ServerError> {
     if let Ok(url) = Url::parse(url_str) {
         if let Some(fragment) = url.fragment() {
             let id_token = fragment
@@ -73,22 +62,24 @@ fn get_id_token(url_str: &str) -> Result<String, Error> {
                     return Ok(token.to_string());
                 }
                 None => {
-                    return Err(Error::Unknown);
+                    return Err(ServerError::Unknown);
                 }
             }
         } else {
-            return Err(Error::Unknown);
+            return Err(ServerError::Unknown);
         }
     } else {
-        return Err(Error::Unknown);
+        return Err(ServerError::Unknown);
     }
 }
 
 pub async fn login_to_open_did(
     cli: &OnlineClient<KiltConfig>,
     signer: Box<dyn Signer<KiltConfig>>,
-) -> Result<String, Error> {
-    let (client, nonce) = request_login().await?;
+    client_id: &str,
+    auth_endpoint: &str,
+) -> Result<String, ServerError> {
+    let (client, nonce) = request_login(client_id, auth_endpoint).await?;
     let did_auth_account_id = signer.account_id();
     let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
     let did_doc = get_did_doc(&did, cli).await?;
@@ -135,7 +126,7 @@ pub async fn login_to_open_did(
 
     let request_url = format!("/api/v1/did/{}", final_token);
 
-    let url = format!("{}{}", OPEN_DID_ENDPOINT, request_url);
+    let url = format!("{}{}", auth_endpoint, request_url);
 
     let res = client.post(url).send().await?;
 
@@ -145,57 +136,36 @@ pub async fn login_to_open_did(
 
     if res.status() == reqwest::StatusCode::NO_CONTENT {
         log::info!("Worked as expected");
-        let location = res.headers().get("Location").ok_or(Error::Unknown)?;
-        let url_response = location.to_str().map_err(|_| Error::Unknown)?;
+        let location = res.headers().get("Location").ok_or(ServerError::Unknown)?;
+        let url_response = location.to_str().map_err(|_| ServerError::Unknown)?;
         let token = get_id_token(url_response)?;
         return Ok(token);
     } else {
-        return Err(Error::Unknown);
+        return Err(ServerError::Unknown);
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct Claim {
-    #[serde(rename = "cTypeHash")]
-    pub ctype_hash: String,
-    contents: serde_json::Value,
-    pub owner: String,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Credential {
-    pub claim: Claim,
-    claim_nonce_map: serde_json::Value,
-    claim_hashes: Vec<String>,
-    delegation_id: Option<String>,
-    legitimations: Option<Vec<Credential>>,
-    pub root_hash: String,
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct AttestationResponse {
-    pub id: String,
-    pub approved: bool,
-    pub revoked: bool,
-    pub ctype_hash: String,
-    pub credential: serde_json::Value,
-    pub claimer: String,
-}
-
-pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Result<(), Error> {
+pub async fn post_claim_to_attester(
+    jwt_token: String,
+    base_claim: String,
+    attester_url: &str,
+) -> Result<(), ServerError> {
     let mut headers = reqwest::header::HeaderMap::new();
 
     let auth_header_value = format!("Bearer {}", jwt_token);
 
     headers.insert(
         AUTHORIZATION,
-        auth_header_value.parse().map_err(|_| Error::Unknown)?,
+        auth_header_value
+            .parse()
+            .map_err(|_| ServerError::Unknown)?,
     );
 
     headers.insert(
         CONTENT_TYPE,
-        "application/json".parse().map_err(|_| Error::Unknown)?,
+        "application/json"
+            .parse()
+            .map_err(|_| ServerError::Unknown)?,
     );
 
     let base_claim_json = serde_json::from_str::<Credential>(&base_claim)?;
@@ -204,7 +174,7 @@ pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Re
         .default_headers(headers)
         .build()?;
 
-    let url = format!("{}/api/v1/attestation_request", ATTESTER_ENDPOINT,);
+    let url = format!("{}/api/v1/attestation_request", attester_url);
 
     let response = client.post(url).json(&base_claim_json).send().await?;
 
@@ -214,30 +184,37 @@ pub async fn post_claim_to_attester(jwt_token: String, base_claim: String) -> Re
         return Ok(());
     } else {
         log::info!("did not worked");
-        return Err(Error::Unknown);
+        return Err(ServerError::Unknown);
     }
 }
 
-pub async fn get_credential_request(jwt_token: String) -> Result<serde_json::Value, Error> {
+pub async fn get_credential_request(
+    jwt_token: String,
+    attester_url: &str,
+) -> Result<serde_json::Value, ServerError> {
     let mut headers = reqwest::header::HeaderMap::new();
 
     let auth_header_value = format!("Bearer {}", jwt_token);
 
     headers.insert(
         AUTHORIZATION,
-        auth_header_value.parse().map_err(|_| Error::Unknown)?,
+        auth_header_value
+            .parse()
+            .map_err(|_| ServerError::Unknown)?,
     );
 
     headers.insert(
         CONTENT_TYPE,
-        "application/json".parse().map_err(|_| Error::Unknown)?,
+        "application/json"
+            .parse()
+            .map_err(|_| ServerError::Unknown)?,
     );
 
     let client = reqwest::Client::builder()
         .default_headers(headers)
         .build()?;
 
-    let url = format!("{}/api/v1/attestation_request", ATTESTER_ENDPOINT,);
+    let url = format!("{}/api/v1/attestation_request", attester_url);
 
     let response = client.get(url).send().await?;
 

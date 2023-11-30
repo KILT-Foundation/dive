@@ -3,11 +3,10 @@ name = "dive"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
 name = "ssi-server"
-path = "src/cmd/ssi-server/main.rs"
+path = "src/cmd/main.rs"
 
 [dependencies]
 reqwest = { version = "0.11.22", features = [
@@ -15,6 +14,7 @@ reqwest = { version = "0.11.22", features = [
     "json",
     "rustls-tls",
 ], default-features = false }
+
 actix-files = "0.6.2"
 actix-web = "4"
 base58 = "0.2.0"
@@ -37,6 +37,10 @@ tokio = { version = "1.29", features = ["full"] }
 rand = "0.8.5"
 sha2 = "0.10.7"
 url = "2.4.1"
+env_logger = "0.10.1"
+clap = { version = "4.4.6", features = ["env", "derive"] }
+thiserror = "1.0.50"
+
 
 [build-dependencies]
 bindgen = "0.66.1"

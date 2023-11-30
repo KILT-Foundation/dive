@@ -7,3 +7,9 @@ frontend/dist
 frontend/yarn-error.log
 
 .idea/
+.env 
+base_claim.json
+*.tar.gz
+*.openssh-privatekey
+*.io
+*.ppk
