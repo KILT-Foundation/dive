@@ -20,6 +20,8 @@ pub enum ServerError {
     Sync,
     #[error("HTTP Client: {0}")]
     HttpClient(#[from] reqwest::Error),
+    #[error("URL Error: {0}")]
+    URL(#[from] url::ParseError),
     #[error("Unknown")]
     Unknown,
 }

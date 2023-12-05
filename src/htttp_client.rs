@@ -57,56 +57,48 @@ pub async fn request_login(
         .map(char::from)
         .collect();
 
-    let request_url = format!("/api/v1/authorize?response_type=id_token&client_id={}&redirect_uri=http://localhost:3333&scope=openid&state={}&nonce={}", client_id, state, nonce );
-
-    let url = format!("{}{}", auth_endpoint, request_url);
+    let request_url = Url::parse_with_params(
+        &format!("{}/api/v1/authorize", auth_endpoint),
+        &[
+            ("response_type", "id_token"),
+            ("client_id", client_id),
+            // TODO may be as a env variable?
+            ("redirect_uri", "http://localhost:3333"),
+            ("scope", "openid"),
+            ("state", &state),
+            ("nonce", &nonce),
+        ],
+    )
+    .map_err(ServerError::from)?;
 
     let client = reqwest::Client::builder().cookie_store(true).build()?;
 
-    client.get(url).send().await?;
+    client.get(request_url.as_str()).send().await?;
 
     Ok((client, nonce))
 }
 
 fn get_id_token(url_str: &str) -> Result<String, ServerError> {
-    if let Ok(url) = Url::parse(url_str) {
-        if let Some(fragment) = url.fragment() {
-            let id_token = fragment
-                .split('&')
-                .find(|segment| segment.starts_with("id_token="))
-                .map(|segment| &segment[9..]);
+    let url = Url::parse(url_str).map_err(ServerError::from)?;
 
-            match id_token {
-                Some(token) => {
-                    return Ok(token.to_string());
-                }
-                None => {
-                    return Err(ServerError::Unknown);
-                }
-            }
-        } else {
-            return Err(ServerError::Unknown);
+    if let Some(fragment) = url.fragment() {
+        if let Some(token) = fragment
+            .split('&')
+            .find(|segment| segment.starts_with("id_token="))
+            .map(|segment| &segment[9..])
+        {
+            return Ok(token.to_string());
         }
-    } else {
-        return Err(ServerError::Unknown);
     }
+
+    Err(ServerError::Unknown)
 }
 
-pub async fn login_to_open_did(
-    cli: &OnlineClient<KiltConfig>,
-    signer: Box<dyn Signer<KiltConfig>>,
-    client_id: &str,
-    auth_endpoint: &str,
-) -> Result<String, ServerError> {
-    let (client, nonce) = request_login(client_id, auth_endpoint).await?;
-    let did_auth_account_id = signer.account_id();
-    let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
-    let did_doc = get_did_doc(&did, cli).await?;
-
-    let kid = hex_encode(did_doc.authentication_key.as_bytes());
-
-    let key_uri = format!("{}#{}", did, kid);
-
+fn get_encoded_jwt_parts(
+    did: String,
+    key_uri: String,
+    nonce: String,
+) -> Result<(String, String), ServerError> {
     let jwt_header = JWTHeader {
         alg: "EdDSA".to_string(),
         typ: "JWT".to_string(),
@@ -129,6 +121,14 @@ pub async fn login_to_open_did(
     let jwt_header_encoded = general_purpose::STANDARD.encode(jwt_header_string);
     let jwt_body_encoded = general_purpose::STANDARD.encode(jwt_body_string);
 
+    Ok((jwt_header_encoded, jwt_body_encoded))
+}
+
+fn get_encoded_jwt_signature(
+    jwt_header_encoded: &str,
+    jwt_body_encoded: &str,
+    signer: Box<dyn Signer<KiltConfig>>,
+) -> String {
     let mut hasher = Sha512::new();
     hasher.update(format!("{}.{}", jwt_header_encoded, jwt_body_encoded));
     let data_to_sign_hex = hex_encode(hasher.finalize());
@@ -142,7 +142,28 @@ pub async fn login_to_open_did(
         MultiSignature::Ecdsa(sig) => hex_encode(sig.0),
     };
 
-    let jwt_signature_encoded = general_purpose::STANDARD.encode(jwt_signature_string);
+    general_purpose::STANDARD.encode(jwt_signature_string)
+}
+
+pub async fn login_to_open_did(
+    cli: &OnlineClient<KiltConfig>,
+    signer: Box<dyn Signer<KiltConfig>>,
+    client_id: &str,
+    auth_endpoint: &str,
+) -> Result<String, ServerError> {
+    let (client, nonce) = request_login(client_id, auth_endpoint).await?;
+
+    let did_auth_account_id = signer.account_id();
+    let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
+    let did_doc = get_did_doc(&did, cli).await?;
+
+    let kid = hex_encode(did_doc.authentication_key.as_bytes());
+    let key_uri = format!("{}#{}", did, kid);
+
+    let (jwt_header_encoded, jwt_body_encoded) = get_encoded_jwt_parts(did, key_uri, nonce)?;
+
+    let jwt_signature_encoded =
+        get_encoded_jwt_signature(&jwt_header_encoded, &jwt_body_encoded, signer);
 
     let final_token = format!(
         "{}.{}.{}",
@@ -243,7 +264,10 @@ pub async fn get_credentials_from_attester(
 
     let response = client.get(url).send().await?;
 
-    let data = response.json::<serde_json::Value>().await?;
+    log::info!("Response from attester service {:?}", response);
+
+    let bytes = response.bytes().await?;
+    let data: serde_json::Value = serde_json::from_slice(&bytes)?;
 
     Ok(data)
 }
