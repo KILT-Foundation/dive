@@ -23,6 +23,12 @@ impl Signer<KiltConfig> for BoxSigner {
     }
 }
 
+impl From<Box<dyn Signer<KiltConfig>>> for BoxSigner {
+    fn from(value: Box<dyn Signer<KiltConfig>>) -> Self {
+        BoxSigner(value)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RawCall {
     pub call: Vec<u8>,

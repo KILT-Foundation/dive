@@ -12,14 +12,33 @@ use subxt::{
 };
 use url::Url;
 
-use super::dto::*;
 use crate::{
+    dto::*,
+    error::ServerError,
     kilt::{did_helper::get_did_doc, KiltConfig},
-    server::error::ServerError,
 };
 
-pub fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
+fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
     format!("0x{}", hex::encode(data.as_ref()))
+}
+
+fn is_jwt_token_not_expired(jwt_token: &str) -> bool {
+    let parts: Vec<&str> = jwt_token.split('.').collect();
+    let Some(header_option) = parts.get(1) else { return false };
+    let Ok(decoded_header)  = general_purpose::STANDARD.decode(header_option) else { return false };
+    let Ok(jwt_header) = serde_json::from_slice::<serde_json::Value>(&decoded_header) else { return false };
+
+    let Ok(expired) = serde_json::from_value::<i64>(jwt_header["exp"].clone()) else { return false };
+    let now = chrono::Utc::now().timestamp();
+    expired > now
+}
+
+fn is_jwt_token_set(jwt_token: &str) -> bool {
+    !jwt_token.is_empty()
+}
+
+pub fn check_jwt_health(jwt_token: &str) -> bool {
+    is_jwt_token_not_expired(jwt_token) && is_jwt_token_set(jwt_token)
 }
 
 pub async fn request_login(
@@ -84,18 +103,24 @@ pub async fn login_to_open_did(
     let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
     let did_doc = get_did_doc(&did, cli).await?;
 
-    let key_uri = hex_encode(did_doc.authentication_key.as_bytes());
+    let kid = hex_encode(did_doc.authentication_key.as_bytes());
+
+    let key_uri = format!("{}#{}", did, kid);
 
     let jwt_header = JWTHeader {
         alg: "EdDSA".to_string(),
         typ: "JWT".to_string(),
-        key_uri,
+        kid: key_uri,
+        crv: "ed25519".to_string(),
+        kty: "ed25519".to_string(),
     };
 
     let jwt_body = JWTBody {
         iss: did.clone(),
         sub: did.clone(),
         nonce,
+        nbf: chrono::Utc::now().timestamp(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
     };
 
     let jwt_header_string = serde_json::to_string(&jwt_header)?;
@@ -130,24 +155,26 @@ pub async fn login_to_open_did(
 
     let res = client.post(url).send().await?;
 
-    if res.status() == reqwest::StatusCode::BAD_REQUEST {
-        log::error!("Bad Request");
+    if res.status() == reqwest::StatusCode::UNAUTHORIZED {
+        log::error!("Unauthorized Error while trying to login in OpenDid");
+        return Err(ServerError::Unknown);
     }
 
     if res.status() == reqwest::StatusCode::NO_CONTENT {
-        log::info!("Worked as expected");
         let location = res.headers().get("Location").ok_or(ServerError::Unknown)?;
         let url_response = location.to_str().map_err(|_| ServerError::Unknown)?;
         let token = get_id_token(url_response)?;
+
+        log::info!("Successfully login in by openDid. New token: {}", token);
         return Ok(token);
-    } else {
-        return Err(ServerError::Unknown);
     }
+
+    return Err(ServerError::Unknown);
 }
 
 pub async fn post_claim_to_attester(
-    jwt_token: String,
-    base_claim: String,
+    jwt_token: &str,
+    base_claim: &Credential,
     attester_url: &str,
 ) -> Result<(), ServerError> {
     let mut headers = reqwest::header::HeaderMap::new();
@@ -168,15 +195,13 @@ pub async fn post_claim_to_attester(
             .map_err(|_| ServerError::Unknown)?,
     );
 
-    let base_claim_json = serde_json::from_str::<Credential>(&base_claim)?;
-
     let client = reqwest::Client::builder()
         .default_headers(headers)
         .build()?;
 
     let url = format!("{}/api/v1/attestation_request", attester_url);
 
-    let response = client.post(url).json(&base_claim_json).send().await?;
+    let response = client.post(url).json(base_claim).send().await?;
 
     if response.status() == StatusCode::OK {
         log::info!("Requested attestation");
@@ -188,8 +213,8 @@ pub async fn post_claim_to_attester(
     }
 }
 
-pub async fn get_credential_request(
-    jwt_token: String,
+pub async fn get_credentials_from_attester(
+    jwt_token: &str,
     attester_url: &str,
 ) -> Result<serde_json::Value, ServerError> {
     let mut headers = reqwest::header::HeaderMap::new();

@@ -198,7 +198,7 @@ dependencies = [
  "serde_urlencoded",
  "smallvec",
  "socket2 0.5.3",
- "time",
+ "time 0.3.28",
  "url",
 ]
 
@@ -918,8 +918,11 @@ checksum = "95ed24df0632f708f5f6d8082675bef2596f7084dee3dd55f632290bf35bfe0f"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "time 0.1.45",
+ "wasm-bindgen",
  "windows-targets 0.48.5",
 ]
 
@@ -1023,7 +1026,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e859cd57d0710d9e06c381b550c06e76992472a8c6d527aecd2fc673dcc231fb"
 dependencies = [
  "percent-encoding",
- "time",
+ "time 0.3.28",
  "version_check",
 ]
 
@@ -1040,7 +1043,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "time",
+ "time 0.3.28",
  "url",
 ]
 
@@ -1360,7 +1363,7 @@ dependencies = [
 
 [[package]]
 name = "dive"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "actix-files",
  "actix-web",
@@ -1368,6 +1371,7 @@ dependencies = [
  "base64 0.21.3",
  "bindgen",
  "bip39",
+ "chrono",
  "clap",
  "env_logger",
  "futures",
@@ -1377,7 +1381,6 @@ dependencies = [
  "rand 0.8.5",
  "reqwest",
  "serde",
- "serde_as",
  "serde_cbor",
  "serde_json",
  "serde_with",
@@ -3631,12 +3634,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_as"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ee4afe4c5c3b69699c4267ae42b838e911466d7ca0005046adc93ac95bb16dd"
-
-[[package]]
 name = "serde_cbor"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3694,7 +3691,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with_macros",
- "time",
+ "time 0.3.28",
 ]
 
 [[package]]
@@ -4936,6 +4933,17 @@ dependencies = [
 
 [[package]]
 name = "time"
+version = "0.1.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
+dependencies = [
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+ "winapi",
+]
+
+[[package]]
+name = "time"
 version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17f6bb557fd245c28e6411aa56b6403c689ad95061f50e4be16c274e70a17e48"
@@ -5340,6 +5348,12 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
+
+[[package]]
+name = "wasi"
+version = "0.10.0+wasi-snapshot-preview1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasi"

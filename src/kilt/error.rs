@@ -1,5 +1,7 @@
 use std::string::FromUtf8Error;
 
+use hex::FromHexError;
+
 /// All possible errors while interacting with the Blockchain.
 #[derive(thiserror::Error, Debug)]
 pub enum TxError {
@@ -30,15 +32,11 @@ pub enum FormatError {
     #[error("Could not convert. Key: {0}")]
     Convert(String),
     #[error("UTF-8 decoding error: {0}")]
-    Utf8(FromUtf8Error),
+    Utf8(#[from] FromUtf8Error),
     #[error("Key URI error: {0}")]
     KeyUri(String),
     #[error("SS58 encoding error: {0}")]
     Ss58(String),
-}
-
-impl From<FromUtf8Error> for TxError {
-    fn from(value: FromUtf8Error) -> Self {
-        TxError::Format(FormatError::Utf8(value))
-    }
+    #[error("Hex error: {0}")]
+    Hex(#[from] FromHexError),
 }

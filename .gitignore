@@ -5,6 +5,7 @@ frontend/node_modules
 frontend/.cache
 frontend/dist
 frontend/yarn-error.log
+frontend/.parcel-cache
 
 .idea/
 .env 
@@ -13,3 +14,4 @@ base_claim.json
 *.openssh-privatekey
 *.io
 *.ppk
+.vscode

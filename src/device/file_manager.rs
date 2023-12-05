@@ -1,9 +1,11 @@
 use std::{fs, io, path::Path, str::FromStr};
 
 use super::{crypto::get_random_bytes, error::DeviceError, key_manager::PairKeyManager};
+use crate::dto::Credential;
 
-const DIR_PATH: String = "/etc/kilt".to_string();
-const KEY_FILE_PATH: String = "/etc/kilt/keys.json".to_string();
+const DIR_PATH: &str = "/etc/kilt";
+const KEY_FILE_PATH: &str = "/etc/kilt/keys.json";
+const BASE_CLAIM_PATH: &str = "./base_claim.json";
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -77,4 +79,17 @@ pub fn reset_keys() -> Result<PairKeyManager, DeviceError> {
             "Key file not found",
         )))
     }
+}
+
+/// Reads the content in [BASE_CLAIM_PATH]
+pub fn get_claim_content() -> Result<Credential, DeviceError> {
+    let base_claim = std::fs::read_to_string(BASE_CLAIM_PATH)?;
+    let claim: Credential = serde_json::from_str(&base_claim)?;
+    Ok(claim)
+}
+
+/// saves the credential in [BASE_CLAIM_PATH]
+pub fn save_claim_content(content: &Credential) -> Result<(), DeviceError> {
+    let string_content = serde_json::to_string(content)?;
+    std::fs::write(BASE_CLAIM_PATH, &string_content).map_err(DeviceError::from)
 }

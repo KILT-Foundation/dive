@@ -1,4 +1,4 @@
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct Claim {
     #[serde(rename = "cTypeHash")]
     pub ctype_hash: String,
@@ -6,7 +6,7 @@ pub struct Claim {
     pub owner: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Credential {
     pub claim: Claim,
@@ -31,7 +31,9 @@ pub struct AttestationResponse {
 pub struct JWTHeader {
     pub alg: String,
     pub typ: String,
-    pub key_uri: String,
+    pub kid: String,
+    pub crv: String,
+    pub kty: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -39,4 +41,6 @@ pub struct JWTBody {
     pub iss: String,
     pub sub: String,
     pub nonce: String,
+    pub exp: i64,
+    pub nbf: i64,
 }

@@ -3,7 +3,6 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone, Parser)]
 pub struct Configuration {
-    // Websocket address of network
     #[clap(env)]
     pub wss_address: String,
     #[clap(env)]

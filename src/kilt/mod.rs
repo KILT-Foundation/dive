@@ -5,10 +5,13 @@ pub mod tx;
 use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
 use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config, OnlineClient};
 
-#[subxt::subxt(runtime_metadata_path = "./spiritnet_1210.scale")]
+#[cfg(feature = "spiritnet")]
+#[subxt::subxt(runtime_metadata_path = "metadata_spiritnet_11110.scale")]
 pub mod runtime {}
 
-pub const SS58_PREFIX: u16 = 38u16;
+#[cfg(not(feature = "spiritnet"))]
+#[subxt::subxt(runtime_metadata_path = "./metadata_peregrine_11110.scale")]
+pub mod runtime {}
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct KiltConfig;
