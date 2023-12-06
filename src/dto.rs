@@ -17,16 +17,6 @@ pub struct Credential {
     pub root_hash: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct AttestationResponse {
-    pub id: String,
-    pub approved: bool,
-    pub revoked: bool,
-    pub ctype_hash: String,
-    pub credential: serde_json::Value,
-    pub claimer: String,
-}
-
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct JWTHeader {
     pub alg: String,
