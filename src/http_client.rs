@@ -44,6 +44,7 @@ pub fn check_jwt_health(jwt_token: &str) -> bool {
 pub async fn request_login(
     client_id: &str,
     auth_endpoint: &str,
+    redirect_url: &str,
 ) -> Result<(reqwest::Client, String), ServerError> {
     let nonce: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -62,8 +63,7 @@ pub async fn request_login(
         &[
             ("response_type", "id_token"),
             ("client_id", client_id),
-            // TODO may be as a env variable?
-            ("redirect_uri", "http://localhost:3333"),
+            ("redirect_uri", redirect_url),
             ("scope", "openid"),
             ("state", &state),
             ("nonce", &nonce),
@@ -150,8 +150,9 @@ pub async fn login_to_open_did(
     signer: Box<dyn Signer<KiltConfig>>,
     client_id: &str,
     auth_endpoint: &str,
+    redirect_url: &str,
 ) -> Result<String, ServerError> {
-    let (client, nonce) = request_login(client_id, auth_endpoint).await?;
+    let (client, nonce) = request_login(client_id, auth_endpoint, redirect_url).await?;
 
     let did_auth_account_id = signer.account_id();
     let did = did_auth_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());

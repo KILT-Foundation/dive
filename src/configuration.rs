@@ -15,4 +15,6 @@ pub struct Configuration {
     pub auth_endpoint: String,
     #[clap(env)]
     pub auth_client_id: String,
+    #[clap(env)]
+    pub redirect_url: String,
 }

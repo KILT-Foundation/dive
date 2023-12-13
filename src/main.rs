@@ -2,7 +2,7 @@ mod configuration;
 mod device;
 mod dto;
 mod error;
-mod htttp_client;
+mod http_client;
 mod kilt;
 mod routes;
 
@@ -35,6 +35,7 @@ pub struct AppState {
     pub jwt_token: Arc<Mutex<String>>,
     pub payment_addr: String,
     pub did_addr: String,
+    pub redirect_url: String,
 }
 
 pub async fn run(
@@ -45,6 +46,7 @@ pub async fn run(
     auth_endpoint: String,
     attester_endpoint: String,
     auth_client_id: String,
+    redirect_url: String,
 ) -> anyhow::Result<()> {
     let payment_account_id = key_manager.get_payment_account_signer().account_id();
     let did_auth_account_id = key_manager.get_did_auth_signer().account_id();
@@ -70,6 +72,7 @@ pub async fn run(
         auth_endpoint,
         payment_addr,
         did_addr,
+        redirect_url,
     };
 
     HttpServer::new(move || {
@@ -125,6 +128,7 @@ async fn main() -> anyhow::Result<()> {
     let auth_endpoint = config.auth_endpoint;
     let attester_endpoint = config.attester_endpoint;
     let auth_client_id = config.auth_client_id;
+    let redirect_url = config.redirect_url;
 
     let key_manager = {
         if exists_key_file() {
@@ -145,6 +149,7 @@ async fn main() -> anyhow::Result<()> {
         auth_endpoint,
         attester_endpoint,
         auth_client_id,
+        redirect_url,
     )
     .await
 }

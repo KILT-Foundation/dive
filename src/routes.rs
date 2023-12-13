@@ -7,7 +7,7 @@ use crate::{
     },
     dto::{Credential, DidAddress, PayerAddress, TxResponse},
     error::ServerError,
-    htttp_client::{
+    http_client::{
         check_jwt_health, get_credentials_from_attester, login_to_open_did, post_claim_to_attester,
     },
     kilt::{
@@ -96,6 +96,7 @@ pub async fn post_base_claim(
             sign_pair,
             &app_state.auth_client_id,
             &app_state.auth_endpoint,
+            &app_state.redirect_url,
         )
         .await?;
         *jwt_token = new_token;
@@ -140,6 +141,7 @@ pub async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Respo
             sign_pair,
             &app_state.auth_client_id,
             &app_state.auth_endpoint,
+            &app_state.redirect_url,
         )
         .await?;
         *jwt_token = new_token;
