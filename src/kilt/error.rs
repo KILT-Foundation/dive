@@ -19,24 +19,14 @@ pub enum TxError {
 pub enum DidError {
     #[error("DID not found : {0}")]
     NotFound(String),
-    #[error("Invalid key")]
-    InvalidKey,
-    #[error("Key missing ")]
-    MissingKey,
     #[error("DID has a wrong format : {0}")]
     Format(String),
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum FormatError {
-    #[error("Could not convert. Key: {0}")]
-    Convert(String),
     #[error("UTF-8 decoding error: {0}")]
     Utf8(#[from] FromUtf8Error),
-    #[error("Key URI error: {0}")]
-    KeyUri(String),
-    #[error("SS58 encoding error: {0}")]
-    Ss58(String),
     #[error("Hex error: {0}")]
     Hex(#[from] FromHexError),
 }

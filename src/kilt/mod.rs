@@ -3,7 +3,7 @@ pub mod error;
 pub mod tx;
 
 use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
-use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config, OnlineClient};
+use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config};
 
 #[cfg(feature = "spiritnet")]
 #[subxt::subxt(runtime_metadata_path = "metadata_spiritnet_11110.scale")]
