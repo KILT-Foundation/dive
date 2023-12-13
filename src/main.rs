@@ -19,7 +19,7 @@ use crate::{
         key_manager::{KeyManager, PairKeyManager},
     },
     error::ServerError,
-    kilt::KiltConfig,
+    kilt::{did_helper::DID_PREFIX, KiltConfig},
 };
 
 #[derive(Clone)]
@@ -49,7 +49,8 @@ pub async fn run(
         payment_account_id.to_ss58check_with_version(38u16.into())
     );
     log::info!(
-        "DID: did:kilt:{}",
+        "DID: {}{}",
+        DID_PREFIX,
         did_auth_account_id.to_ss58check_with_version(38u16.into())
     );
 

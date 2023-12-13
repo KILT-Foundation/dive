@@ -13,7 +13,7 @@ use crate::{
         check_jwt_health, get_credentials_from_attester, login_to_open_did, post_claim_to_attester,
     },
     kilt::{
-        did_helper::{create_did, get_did_doc},
+        did_helper::{create_did, query_did_doc, DID_PREFIX},
         error::{FormatError, TxError},
         tx::{submit_call, BoxSigner, WaitFor},
     },
@@ -34,8 +34,8 @@ pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, S
     let did_auth_account_id = key_manager.get_did_auth_signer().account_id();
     let addr = did_auth_account_id.to_ss58check_with_version(38u16.into());
     let cli = app_state.kilt_api.lock()?;
-    get_did_doc(&addr, &cli).await?;
-    Ok(HttpResponse::Ok().json(json!({ "did": format!("did:kilt:{}", addr) })))
+    query_did_doc(&addr, &cli).await?;
+    Ok(HttpResponse::Ok().json(json!({ "did": format!("{}{}", DID_PREFIX, addr) })))
 }
 
 pub async fn register_device_did(

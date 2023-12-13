@@ -24,11 +24,13 @@ use super::{
     tx::BoxSigner,
 };
 
-pub async fn get_did_doc(
+pub const DID_PREFIX: &'static str = "did:kilt:";
+
+pub async fn query_did_doc(
     did_input: &str,
     cli: &OnlineClient<KiltConfig>,
 ) -> Result<runtime_types::did::did_details::DidDetails, TxError> {
-    let did = subxt::utils::AccountId32::from_str(did_input.trim_start_matches("did:kilt:"))
+    let did = subxt::utils::AccountId32::from_str(did_input.trim_start_matches(DID_PREFIX))
         .map_err(|_| TxError::Did(DidError::Format(did_input.to_string())))?;
     let did_doc_key = storage().did().did(&did);
     let details = cli
