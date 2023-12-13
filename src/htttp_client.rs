@@ -15,7 +15,7 @@ use url::Url;
 use crate::{
     dto::*,
     error::ServerError,
-    kilt::{did_helper::get_did_doc, KiltConfig},
+    kilt::{did_helper::query_did_doc, KiltConfig},
 };
 
 fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
@@ -155,7 +155,7 @@ pub async fn login_to_open_did(
 
     let did_auth_account_id = signer.account_id();
     let did = did_auth_account_id.to_ss58check_with_version(38u16.into());
-    let did_doc = get_did_doc(&did, cli).await?;
+    let did_doc = query_did_doc(&did, cli).await?;
 
     let kid = hex_encode(did_doc.authentication_key.as_bytes());
     let key_uri = format!("{}#{}", did, kid);
