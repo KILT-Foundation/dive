@@ -1,9 +1,6 @@
 use base64::{engine::general_purpose, Engine};
 use rand::{distributions::Alphanumeric, Rng};
-use reqwest::{
-    header::{AUTHORIZATION, CONTENT_TYPE},
-    StatusCode,
-};
+use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use sha2::{Digest, Sha512};
 use subxt::{
     ext::{sp_core::crypto::Ss58Codec, sp_runtime::MultiSignature},
@@ -94,7 +91,7 @@ fn get_id_token(url_str: &str) -> Result<String, ServerError> {
         }
     }
 
-    Err(ServerError::Unknown)
+    Err(ServerError::Login("Id Token not present"))
 }
 
 fn get_encoded_jwt_parts(
@@ -179,21 +176,20 @@ pub async fn login_to_open_did(
 
     let res = client.post(url).send().await?;
 
-    if res.status() == reqwest::StatusCode::UNAUTHORIZED {
-        log::error!("Unauthorized Error while trying to login in OpenDid");
-        return Err(ServerError::Unknown);
-    }
+    let ok_response = res.error_for_status()?;
 
-    if res.status() == reqwest::StatusCode::NO_CONTENT {
-        let location = res.headers().get("Location").ok_or(ServerError::Unknown)?;
-        let url_response = location.to_str().map_err(|_| ServerError::Unknown)?;
-        let token = get_id_token(url_response)?;
+    let location = ok_response
+        .headers()
+        .get("Location")
+        .ok_or(ServerError::Login("Location is not present in response"))?;
 
-        log::info!("Successfully login in by openDid. New token: {}", token);
-        return Ok(token);
-    }
+    let url_response = location
+        .to_str()
+        .map_err(|_| ServerError::Login("Could not convert location value to string."))?;
+    let token = get_id_token(url_response)?;
 
-    return Err(ServerError::Unknown);
+    log::info!("Successfully login in by openDid. New token: {}", token);
+    return Ok(token);
 }
 
 pub async fn post_claim_to_attester(
@@ -205,19 +201,9 @@ pub async fn post_claim_to_attester(
 
     let auth_header_value = format!("Bearer {}", jwt_token);
 
-    headers.insert(
-        AUTHORIZATION,
-        auth_header_value
-            .parse()
-            .map_err(|_| ServerError::Unknown)?,
-    );
+    headers.insert(AUTHORIZATION, auth_header_value.parse()?);
 
-    headers.insert(
-        CONTENT_TYPE,
-        "application/json"
-            .parse()
-            .map_err(|_| ServerError::Unknown)?,
-    );
+    headers.insert(CONTENT_TYPE, "application/json".parse()?);
 
     let client = reqwest::Client::builder()
         .default_headers(headers)
@@ -227,14 +213,14 @@ pub async fn post_claim_to_attester(
 
     let response = client.post(url).json(base_claim).send().await?;
 
-    if response.status() == StatusCode::OK {
-        log::info!("Requested attestation");
+    // Check if the attester service does not return an error code.
+    let ok_response = response.error_for_status()?;
 
-        return Ok(());
-    } else {
-        log::info!("did not worked");
-        return Err(ServerError::Unknown);
-    }
+    log::info!(
+        "Sended credential to attester. Status code: {}",
+        ok_response.status()
+    );
+    return Ok(());
 }
 
 pub async fn get_credentials_from_attester(
@@ -245,19 +231,9 @@ pub async fn get_credentials_from_attester(
 
     let auth_header_value = format!("Bearer {}", jwt_token);
 
-    headers.insert(
-        AUTHORIZATION,
-        auth_header_value
-            .parse()
-            .map_err(|_| ServerError::Unknown)?,
-    );
+    headers.insert(AUTHORIZATION, auth_header_value.parse()?);
 
-    headers.insert(
-        CONTENT_TYPE,
-        "application/json"
-            .parse()
-            .map_err(|_| ServerError::Unknown)?,
-    );
+    headers.insert(CONTENT_TYPE, "application/json".parse()?);
 
     let client = reqwest::Client::builder()
         .default_headers(headers)

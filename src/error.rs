@@ -8,8 +8,6 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum ServerError {
-    #[error("IO error: {0}")]
-    IO(#[from] std::io::Error),
     #[error("Device error: {0}")]
     Device(#[from] DeviceError),
     #[error("Tx error: {0}")]
@@ -20,10 +18,12 @@ pub enum ServerError {
     Sync,
     #[error("HTTP Client: {0}")]
     HttpClient(#[from] reqwest::Error),
+    #[error("HTTP Client: {0}")]
+    HttpClientHeader(#[from] reqwest::header::InvalidHeaderValue),
     #[error("URL Error: {0}")]
     URL(#[from] url::ParseError),
-    #[error("Unknown")]
-    Unknown,
+    #[error("Login error: {0}")]
+    Login(&'static str),
 }
 
 impl<T> From<PoisonError<T>> for ServerError {

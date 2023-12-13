@@ -8,6 +8,7 @@ mod routes;
 
 use actix_files as fs;
 use actix_web::{middleware::Logger, web, App, HttpServer};
+use anyhow::Context;
 use clap::Parser;
 use std::sync::{Arc, Mutex};
 use subxt::{ext::sp_core::crypto::Ss58Codec, OnlineClient};
@@ -18,7 +19,6 @@ use crate::{
         exists_key_file, get_existing_key_pair_manager, init_key_pair_manager,
         key_manager::{KeyManager, PairKeyManager},
     },
-    error::ServerError,
     kilt::{
         did_helper::{ADDRESS_FORMAT, DID_PREFIX},
         KiltConfig,
@@ -45,7 +45,7 @@ pub async fn run(
     auth_endpoint: String,
     attester_endpoint: String,
     auth_client_id: String,
-) -> Result<(), ServerError> {
+) -> anyhow::Result<()> {
     let payment_account_id = key_manager.get_payment_account_signer().account_id();
     let did_auth_account_id = key_manager.get_did_auth_signer().account_id();
 
@@ -57,7 +57,7 @@ pub async fn run(
 
     let api = OnlineClient::<KiltConfig>::from_url(&wss_endpoint)
         .await
-        .expect("Creating the onlineclient should not fail.");
+        .context("Creating the onlineclient should not fail.")?;
 
     log::info!("Connected to: {}", wss_endpoint);
 
@@ -105,15 +105,14 @@ pub async fn run(
             )
             .service(fs::Files::new("/", &source_dir).index_file("index.html"))
     })
-    .bind(("0.0.0.0", port))
-    .map_err(|e| ServerError::IO(e))?
+    .bind(("0.0.0.0", port))?
     .run()
-    .await
-    .map_err(|e| ServerError::IO(e))
+    .await?;
+    Ok(())
 }
 
 #[actix_web::main]
-async fn main() -> Result<(), ServerError> {
+async fn main() -> anyhow::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     log::info!("Fetching env variables");
@@ -129,9 +128,10 @@ async fn main() -> Result<(), ServerError> {
 
     let key_manager = {
         if exists_key_file() {
-            get_existing_key_pair_manager()?
+            get_existing_key_pair_manager()
+                .context("Fetching existing key pairs from file system should not fail.")?
         } else {
-            init_key_pair_manager()?
+            init_key_pair_manager().context("Init new key pair should not fail.")?
         }
     };
 

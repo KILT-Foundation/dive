@@ -21,7 +21,7 @@ fn save_key_file(key_file: &KeysFileStructure) -> Result<(), io::Error> {
     fs::write(KEY_FILE_PATH, keys_file_json)
 }
 
-pub fn get_existing_key_pair_manager() -> Result<PairKeyManager, DeviceError> {
+pub fn get_existing_key_pair_manager() -> anyhow::Result<PairKeyManager> {
     let keys_file_json = fs::read_to_string(KEY_FILE_PATH)?;
     let keys_file: KeysFileStructure = serde_json::from_str(&keys_file_json)?;
     let payment_mnemonic = bip39::Mnemonic::from_str(&keys_file.payment_account_seed)?;
@@ -35,7 +35,7 @@ pub fn exists_key_file() -> bool {
 }
 
 /// Initialize keys and return a `PairKeyManager`.
-pub fn init_key_pair_manager() -> Result<PairKeyManager, DeviceError> {
+pub fn init_key_pair_manager() -> anyhow::Result<PairKeyManager> {
     let key_file = generate_key_file_struct()?;
     save_key_file(&key_file)?;
     let manager = PairKeyManager::try_from(key_file)?;

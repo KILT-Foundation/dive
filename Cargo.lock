@@ -1367,6 +1367,7 @@ version = "0.0.1"
 dependencies = [
  "actix-files",
  "actix-web",
+ "anyhow",
  "base58",
  "base64 0.21.3",
  "bindgen",
