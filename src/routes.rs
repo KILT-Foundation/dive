@@ -113,7 +113,7 @@ pub async fn post_base_claim(
 }
 
 pub async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
-    let manager = crate::device::reset_keys()?;
+    let manager = crate::device::reset_did_keys()?;
 
     log::info!("new Did: {:?}", manager.get_did_auth_signer().account_id());
 

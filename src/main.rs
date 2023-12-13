@@ -15,7 +15,7 @@ use subxt::{ext::sp_core::crypto::Ss58Codec, OnlineClient};
 use crate::{
     configuration::Configuration,
     device::{
-        init_keys,
+        exists_key_file, get_existing_key_pair_manager, init_key_pair_manager,
         key_manager::{KeyManager, PairKeyManager},
     },
     error::ServerError,
@@ -121,7 +121,13 @@ async fn main() -> Result<(), ServerError> {
     let attester_endpoint = config.attester_endpoint;
     let auth_client_id = config.auth_client_id;
 
-    let key_manager = init_keys()?;
+    let key_manager = {
+        if exists_key_file() {
+            get_existing_key_pair_manager()?
+        } else {
+            init_key_pair_manager()?
+        }
+    };
 
     log::info!("Staring Server on port: {}", port);
 

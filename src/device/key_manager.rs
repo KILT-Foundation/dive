@@ -2,6 +2,7 @@ use subxt::ext::sp_core::{sr25519, Pair};
 use subxt::tx::PairSigner;
 use subxt::tx::Signer;
 
+use super::file_manager::KeysFileStructure;
 use crate::{device::error::DeviceError, kilt::KiltConfig};
 
 pub trait KeyManager {
@@ -33,5 +34,13 @@ impl KeyManager for PairKeyManager {
 
     fn get_did_auth_signer(&self) -> Box<dyn Signer<KiltConfig>> {
         Box::new(PairSigner::new(self.did_auth_signer.clone()))
+    }
+}
+
+impl TryFrom<KeysFileStructure> for PairKeyManager {
+    type Error = DeviceError;
+
+    fn try_from(value: KeysFileStructure) -> Result<Self, Self::Error> {
+        PairKeyManager::new(&value.payment_account_seed, &value.did_auth_seed)
     }
 }
