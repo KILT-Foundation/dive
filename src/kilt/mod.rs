@@ -24,12 +24,3 @@ impl Config for KiltConfig {
     type Signature = subxt::ext::sp_runtime::MultiSignature;
     type ExtrinsicParams = PolkadotExtrinsicParams<Self>;
 }
-
-pub async fn connect(endpoint: &str) -> Result<OnlineClient<KiltConfig>, error::TxError> {
-    let endpoint_url = match endpoint {
-        "spiritnet" => "wss://spiritnet.kilt.io:443",
-        "peregrine" => "wss://peregrine.kilt.io:443/parachain-public-ws",
-        _ => endpoint,
-    };
-    Ok(OnlineClient::<KiltConfig>::from_url(endpoint_url).await?)
-}

@@ -55,7 +55,9 @@ pub async fn run(
     log::info!("payment_account_id: {}", payment_addr);
     log::info!("DID: {}{}", DID_PREFIX, did_addr);
 
-    let api = kilt::connect(&wss_endpoint).await?;
+    let api = OnlineClient::<KiltConfig>::from_url(&wss_endpoint)
+        .await
+        .expect("Creating the onlineclient should not fail.");
 
     log::info!("Connected to: {}", wss_endpoint);
 
