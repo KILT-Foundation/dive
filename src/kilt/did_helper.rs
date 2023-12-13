@@ -25,6 +25,7 @@ use super::{
 };
 
 pub const DID_PREFIX: &'static str = "did:kilt:";
+pub const ADDRESS_FORMAT: u16 = 38;
 
 pub async fn query_did_doc(
     did_input: &str,

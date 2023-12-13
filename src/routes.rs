@@ -1,6 +1,5 @@
 use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
-use subxt::ext::sp_core::crypto::Ss58Codec;
 
 use crate::{
     device::{
@@ -23,16 +22,12 @@ use crate::{
 pub async fn get_payment_account_address(
     app_state: web::Data<AppState>,
 ) -> Result<impl Responder, ServerError> {
-    let key_manager = app_state.key_manager.lock()?;
-    let payment_account_id = key_manager.get_payment_account_signer().account_id();
-    let addr = payment_account_id.to_ss58check_with_version(38u16.into());
+    let addr = &app_state.payment_addr;
     Ok(HttpResponse::Ok().json(json!({ "address": addr })))
 }
 
 pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
-    let key_manager = app_state.key_manager.lock()?;
-    let did_auth_account_id = key_manager.get_did_auth_signer().account_id();
-    let addr = did_auth_account_id.to_ss58check_with_version(38u16.into());
+    let addr = &app_state.did_addr;
     let cli = app_state.kilt_api.lock()?;
     query_did_doc(&addr, &cli).await?;
     Ok(HttpResponse::Ok().json(json!({ "did": format!("{}{}", DID_PREFIX, addr) })))

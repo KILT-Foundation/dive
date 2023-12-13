@@ -19,7 +19,10 @@ use crate::{
         key_manager::{KeyManager, PairKeyManager},
     },
     error::ServerError,
-    kilt::{did_helper::DID_PREFIX, KiltConfig},
+    kilt::{
+        did_helper::{ADDRESS_FORMAT, DID_PREFIX},
+        KiltConfig,
+    },
 };
 
 #[derive(Clone)]
@@ -30,6 +33,8 @@ pub struct AppState {
     pub attester_endpoint: String,
     pub auth_client_id: String,
     pub jwt_token: Arc<Mutex<String>>,
+    pub payment_addr: String,
+    pub did_addr: String,
 }
 
 pub async fn run(
@@ -44,15 +49,11 @@ pub async fn run(
     let payment_account_id = key_manager.get_payment_account_signer().account_id();
     let did_auth_account_id = key_manager.get_did_auth_signer().account_id();
 
-    log::info!(
-        "payment_account_id: {}",
-        payment_account_id.to_ss58check_with_version(38u16.into())
-    );
-    log::info!(
-        "DID: {}{}",
-        DID_PREFIX,
-        did_auth_account_id.to_ss58check_with_version(38u16.into())
-    );
+    let payment_addr = payment_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
+    let did_addr = did_auth_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
+
+    log::info!("payment_account_id: {}", payment_addr);
+    log::info!("DID: {}{}", DID_PREFIX, did_addr);
 
     let api = kilt::connect(&wss_endpoint).await?;
 
@@ -65,6 +66,8 @@ pub async fn run(
         attester_endpoint,
         auth_client_id,
         auth_endpoint,
+        payment_addr,
+        did_addr,
     };
 
     HttpServer::new(move || {
