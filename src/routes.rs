@@ -112,7 +112,7 @@ pub async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, Ser
 
     log::info!("new Did: {:?}", manager.get_did_auth_signer().account_id());
 
-    let remove_file = std::fs::remove_file("base_claim.json");
+    let remove_file = tokio::fs::remove_file("base_claim.json").await;
     if remove_file.is_err() {
         log::info!("No claim to delete");
     }
