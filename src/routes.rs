@@ -1,12 +1,11 @@
 use actix_web::{web, HttpResponse, Responder};
-use serde_json::json;
 
 use crate::{
     device::{
         file_manager::{get_claim_content, save_claim_content},
         key_manager::KeyManager,
     },
-    dto::Credential,
+    dto::{Credential, DidAddress, PayerAddress, TxResponse},
     error::ServerError,
     htttp_client::{
         check_jwt_health, get_credentials_from_attester, login_to_open_did, post_claim_to_attester,
@@ -22,15 +21,17 @@ use crate::{
 pub async fn get_payment_account_address(
     app_state: web::Data<AppState>,
 ) -> Result<impl Responder, ServerError> {
-    let addr = &app_state.payment_addr;
-    Ok(HttpResponse::Ok().json(json!({ "address": addr })))
+    let address = app_state.payment_addr.clone();
+    Ok(HttpResponse::Ok().json(PayerAddress { address }))
 }
 
 pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
     let addr = &app_state.did_addr;
     let cli = app_state.kilt_api.lock()?;
     query_did_doc(&addr, &cli).await?;
-    Ok(HttpResponse::Ok().json(json!({ "did": format!("{}{}", DID_PREFIX, addr) })))
+    Ok(HttpResponse::Ok().json(DidAddress {
+        did: format!("{}{}", DID_PREFIX, addr),
+    }))
 }
 
 pub async fn register_device_did(
@@ -41,9 +42,9 @@ pub async fn register_device_did(
     let submitter_signer = keys.get_payment_account_signer();
     let cli = app_state.kilt_api.lock()?;
     let extrinsic_hash = create_did(did_auth_signer.into(), submitter_signer.into(), &cli).await?;
-    let formatted_extrinsic_hash = format!("0x{}", hex::encode(extrinsic_hash));
-    log::info!("Tx hash: {}", formatted_extrinsic_hash);
-    Ok(HttpResponse::Ok().json(json!({ "tx": formatted_extrinsic_hash })))
+    let tx = format!("0x{}", hex::encode(extrinsic_hash));
+    log::info!("Tx hash: {}", tx);
+    Ok(HttpResponse::Ok().json(TxResponse { tx }))
 }
 
 pub async fn submit_extrinsic(
@@ -60,15 +61,15 @@ pub async fn submit_extrinsic(
     let call = hex::decode(trimmed_call)
         .map_err(|e| ServerError::Tx(TxError::Format(FormatError::Hex(e))))?;
 
-    let tx_hash = submit_call(&cli, &signer, &call, WaitFor::Finalized).await?;
+    let tx = submit_call(&cli, &signer, &call, WaitFor::Finalized).await?;
 
-    log::info!("Tx hash: {}", tx_hash);
-    Ok(HttpResponse::Ok().json(json!({ "tx": tx_hash })))
+    log::info!("Tx hash: {}", tx);
+    Ok(HttpResponse::Ok().json(TxResponse { tx }))
 }
 
 pub async fn get_base_claim() -> Result<impl Responder, ServerError> {
     let claim = get_claim_content()?;
-    Ok(HttpResponse::Ok().json(json!(claim)))
+    Ok(HttpResponse::Ok().json(claim))
 }
 
 pub async fn post_base_claim(
@@ -104,7 +105,7 @@ pub async fn post_base_claim(
 
     save_claim_content(&base_claim)?;
 
-    Ok(HttpResponse::Ok().json(json!({ "base_claim": base_claim })))
+    Ok(HttpResponse::Ok().json(base_claim))
 }
 
 pub async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {

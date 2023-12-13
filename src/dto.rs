@@ -34,3 +34,18 @@ pub struct JWTBody {
     pub exp: i64,
     pub nbf: i64,
 }
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct DidAddress {
+    pub did: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct TxResponse {
+    pub tx: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct PayerAddress {
+    pub address: String,
+}
