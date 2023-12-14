@@ -5,6 +5,7 @@ mod error;
 mod http_client;
 mod kilt;
 mod routes;
+mod utils;
 
 use actix_files as fs;
 use actix_web::{middleware::Logger, web, App, HttpServer};
@@ -28,7 +29,7 @@ use crate::{
 #[derive(Clone)]
 pub struct AppState {
     pub key_manager: Arc<Mutex<PairKeyManager>>,
-    pub kilt_api: Arc<Mutex<OnlineClient<KiltConfig>>>,
+    pub kilt_api: Arc<OnlineClient<KiltConfig>>,
     pub auth_endpoint: String,
     pub attester_endpoint: String,
     pub auth_client_id: String,
@@ -65,7 +66,7 @@ pub async fn run(
 
     let app_state = AppState {
         key_manager: Arc::new(Mutex::new(key_manager)),
-        kilt_api: Arc::new(Mutex::new(api)),
+        kilt_api: Arc::new(api),
         jwt_token: Arc::new(Mutex::new(String::new())),
         attester_endpoint,
         auth_client_id,
@@ -74,6 +75,9 @@ pub async fn run(
         did_addr,
         redirect_url,
     };
+
+    // if a thread receives a poisond lock we panic the main thread.
+    utils::set_panic_hook();
 
     HttpServer::new(move || {
         App::new()

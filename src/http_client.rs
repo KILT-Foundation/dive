@@ -146,7 +146,7 @@ fn get_encoded_jwt_signature(
 }
 
 pub async fn login_to_open_did(
-    cli: &OnlineClient<KiltConfig>,
+    kilt_api: &OnlineClient<KiltConfig>,
     signer: Box<dyn Signer<KiltConfig>>,
     client_id: &str,
     auth_endpoint: &str,
@@ -156,7 +156,7 @@ pub async fn login_to_open_did(
 
     let did_auth_account_id = signer.account_id();
     let did = did_auth_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
-    let did_doc = query_did_doc(&did, cli).await?;
+    let did_doc = query_did_doc(&did, kilt_api).await?;
 
     let kid = hex_encode(did_doc.authentication_key.as_bytes());
     let key_uri = format!("{}#{}", did, kid);

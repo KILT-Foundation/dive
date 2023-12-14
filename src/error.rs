@@ -1,5 +1,4 @@
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
-use std::sync::PoisonError;
 
 use crate::{
     device::DeviceError,
@@ -14,8 +13,6 @@ pub enum ServerError {
     Tx(#[from] TxError),
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
-    #[error("Sync Error")]
-    Sync,
     #[error("HTTP Client: {0}")]
     HttpClient(#[from] reqwest::Error),
     #[error("HTTP Client: {0}")]
@@ -24,12 +21,6 @@ pub enum ServerError {
     URL(#[from] url::ParseError),
     #[error("Login error: {0}")]
     Login(&'static str),
-}
-
-impl<T> From<PoisonError<T>> for ServerError {
-    fn from(_err: PoisonError<T>) -> Self {
-        Self::Sync
-    }
 }
 
 impl ResponseError for ServerError {
