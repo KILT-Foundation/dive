@@ -29,7 +29,7 @@ use crate::{
 #[derive(Clone)]
 pub struct AppState {
     pub key_manager: Arc<Mutex<PairKeyManager>>,
-    pub kilt_api: Arc<OnlineClient<KiltConfig>>,
+    pub chain_client: Arc<OnlineClient<KiltConfig>>,
     pub auth_endpoint: String,
     pub attester_endpoint: String,
     pub auth_client_id: String,
@@ -66,7 +66,7 @@ pub async fn run(
 
     let app_state = AppState {
         key_manager: Arc::new(Mutex::new(key_manager)),
-        kilt_api: Arc::new(api),
+        chain_client: Arc::new(api),
         jwt_token: Arc::new(Mutex::new(String::new())),
         attester_endpoint,
         auth_client_id,

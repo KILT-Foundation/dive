@@ -27,8 +27,8 @@ pub async fn get_payment_account_address(
 
 pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
     let addr = &app_state.did_addr;
-    let kilt_api = &app_state.kilt_api;
-    query_did_doc(&addr, kilt_api).await?;
+    let chain_client = &app_state.chain_client;
+    query_did_doc(&addr, chain_client).await?;
     Ok(HttpResponse::Ok().json(DidAddress {
         did: format!("{}{}", DID_PREFIX, addr),
     }))
@@ -43,9 +43,13 @@ pub async fn register_device_did(
         .expect("Received poisoned lock for key manager");
     let did_auth_signer = keys.get_did_auth_signer();
     let submitter_signer = keys.get_payment_account_signer();
-    let kilt_api = &app_state.kilt_api;
-    let extrinsic_hash =
-        create_did(did_auth_signer.into(), submitter_signer.into(), kilt_api).await?;
+    let chain_client = &app_state.chain_client;
+    let extrinsic_hash = create_did(
+        did_auth_signer.into(),
+        submitter_signer.into(),
+        chain_client,
+    )
+    .await?;
     let tx = format!("0x{}", hex::encode(extrinsic_hash));
     log::info!("Tx hash: {}", tx);
     Ok(HttpResponse::Ok().json(TxResponse { tx }))
@@ -55,7 +59,7 @@ pub async fn submit_extrinsic(
     app_state: web::Data<AppState>,
     body: web::Json<String>,
 ) -> Result<impl Responder, ServerError> {
-    let kilt_api = &app_state.kilt_api;
+    let chain_client = &app_state.chain_client;
     let keys = app_state
         .key_manager
         .lock()
@@ -68,7 +72,7 @@ pub async fn submit_extrinsic(
     let call = hex::decode(trimmed_call)
         .map_err(|e| ServerError::Tx(TxError::Format(FormatError::Hex(e))))?;
 
-    let tx = submit_call(kilt_api, &signer, &call, WaitFor::Finalized).await?;
+    let tx = submit_call(chain_client, &signer, &call, WaitFor::Finalized).await?;
 
     log::info!("Tx hash: {}", tx);
     Ok(HttpResponse::Ok().json(TxResponse { tx }))
@@ -94,7 +98,7 @@ pub async fn post_base_claim(
             .expect("Received poisoned lock for key manager");
 
     let sign_pair = key_manager.get_did_auth_signer();
-    let kilt_api = &app_state.kilt_api;
+    let chain_client = &app_state.chain_client;
 
     let mut jwt_token = app_state
         .jwt_token
@@ -105,7 +109,7 @@ pub async fn post_base_claim(
 
     if !is_jwt_healty {
         let new_token = login_to_open_did(
-            kilt_api,
+            chain_client,
             sign_pair,
             &app_state.auth_client_id,
             &app_state.auth_endpoint,
@@ -151,7 +155,7 @@ pub async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Respo
         .lock()
         .expect("Received poisoned lock for key manager");
     let sign_pair = key_manager.get_did_auth_signer();
-    let kilt_api = &app_state.kilt_api;
+    let chain_client = &app_state.chain_client;
 
     let mut jwt_token = app_state
         .jwt_token
@@ -162,7 +166,7 @@ pub async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Respo
 
     if !is_jwt_healty {
         let new_token = login_to_open_did(
-            kilt_api,
+            chain_client,
             sign_pair,
             &app_state.auth_client_id,
             &app_state.auth_endpoint,
