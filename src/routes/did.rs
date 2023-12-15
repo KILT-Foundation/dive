@@ -14,15 +14,10 @@ async fn register_device_did(
     app_state: web::Data<AppState>,
 ) -> Result<impl Responder, ServerError> {
     let keys = app_state.key_manager.lock().await;
-    let did_auth_signer = keys.get_did_auth_signer();
-    let submitter_signer = keys.get_payment_account_signer();
+    let did_auth_signer = &keys.get_did_auth_signer();
+    let submitter_signer = &keys.get_payment_account_signer();
     let chain_client = &app_state.chain_client;
-    let extrinsic_hash = create_did(
-        did_auth_signer.into(),
-        submitter_signer.into(),
-        chain_client,
-    )
-    .await?;
+    let extrinsic_hash = create_did(did_auth_signer, submitter_signer, chain_client).await?;
     let tx = format!("0x{}", hex::encode(extrinsic_hash));
     log::info!("Tx hash: {}", tx);
     Ok(HttpResponse::Ok().json(TxResponse { tx }))

@@ -3,8 +3,11 @@ use rand::{distributions::Alphanumeric, Rng};
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use sha2::{Digest, Sha512};
 use subxt::{
-    ext::{sp_core::crypto::Ss58Codec, sp_runtime::MultiSignature},
-    tx::Signer,
+    ext::{
+        sp_core::{crypto::Ss58Codec, sr25519},
+        sp_runtime::MultiSignature,
+    },
+    tx::{PairSigner, Signer},
     OnlineClient,
 };
 use url::Url;
@@ -127,7 +130,7 @@ fn get_encoded_jwt_parts(
 fn get_encoded_jwt_signature(
     jwt_header_encoded: &str,
     jwt_body_encoded: &str,
-    signer: Box<dyn Signer<KiltConfig>>,
+    signer: PairSigner<KiltConfig, sr25519::Pair>,
 ) -> String {
     let mut hasher = Sha512::new();
     hasher.update(format!("{}.{}", jwt_header_encoded, jwt_body_encoded));
@@ -147,7 +150,7 @@ fn get_encoded_jwt_signature(
 
 pub async fn login_to_open_did(
     kilt_api: &OnlineClient<KiltConfig>,
-    signer: Box<dyn Signer<KiltConfig>>,
+    signer: PairSigner<KiltConfig, sr25519::Pair>,
     client_id: &str,
     auth_endpoint: &str,
     redirect_url: &str,

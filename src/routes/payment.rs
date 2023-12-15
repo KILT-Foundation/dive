@@ -6,7 +6,7 @@ use crate::{
     error::ServerError,
     kilt::{
         error::{FormatError, TxError},
-        tx::{submit_call, BoxSigner, WaitFor},
+        tx::{submit_call, WaitFor},
     },
     AppState,
 };
@@ -26,7 +26,7 @@ async fn submit_extrinsic(
 ) -> Result<impl Responder, ServerError> {
     let chain_client = &app_state.chain_client;
     let keys = app_state.key_manager.lock().await;
-    let signer = BoxSigner(keys.get_payment_account_signer());
+    let signer = keys.get_payment_account_signer();
     let call_string = body.0;
 
     let trimmed_call = call_string.trim_start_matches("0x");

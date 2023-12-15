@@ -1,8 +1,8 @@
 use sp_core::H256;
 use std::str::FromStr;
 use subxt::{
-    ext::{codec::Encode, sp_runtime::MultiSignature},
-    tx::Signer,
+    ext::{codec::Encode, sp_core::sr25519::Pair, sp_runtime::MultiSignature},
+    tx::{PairSigner, Signer},
     OnlineClient,
 };
 
@@ -12,16 +12,13 @@ use crate::kilt::{
     KiltConfig,
 };
 
-use super::{
-    runtime::{
-        self,
-        runtime_types::{
-            bounded_collections::bounded_btree_set::BoundedBTreeSet,
-            did::did_details::{DidCreationDetails, DidSignature},
-            sp_core::{ecdsa, ed25519, sr25519},
-        },
+use super::runtime::{
+    self,
+    runtime_types::{
+        bounded_collections::bounded_btree_set::BoundedBTreeSet,
+        did::did_details::{DidCreationDetails, DidSignature},
+        sp_core::{ecdsa, ed25519, sr25519},
     },
-    tx::BoxSigner,
 };
 
 pub const DID_PREFIX: &'static str = "did:kilt:";
@@ -46,13 +43,13 @@ pub async fn query_did_doc(
 }
 
 pub async fn create_did(
-    did_auth_signer: BoxSigner,
-    submitter_signer: BoxSigner,
+    did_auth_signer: &PairSigner<KiltConfig, Pair>,
+    submitter_signer: &PairSigner<KiltConfig, Pair>,
     chain_client: &OnlineClient<KiltConfig>,
 ) -> Result<H256, TxError> {
     let details = DidCreationDetails {
-        did: did_auth_signer.account_id().into(),
-        submitter: submitter_signer.account_id().into(),
+        did: did_auth_signer.account_id().clone().into(),
+        submitter: submitter_signer.account_id().clone().into(),
         new_key_agreement_keys: BoundedBTreeSet(vec![]),
         new_attestation_key: None,
         new_delegation_key: None,
@@ -68,7 +65,7 @@ pub async fn create_did(
     let tx = runtime::tx().did().create(details, did_sig);
     let events = chain_client
         .tx()
-        .sign_and_submit_then_watch_default(&tx, &submitter_signer)
+        .sign_and_submit_then_watch_default(&tx, submitter_signer)
         .await?
         .wait_for_finalized_success()
         .await?;

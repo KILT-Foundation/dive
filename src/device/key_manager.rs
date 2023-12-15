@@ -1,13 +1,12 @@
 use subxt::ext::sp_core::{sr25519, Pair};
 use subxt::tx::PairSigner;
-use subxt::tx::Signer;
 
 use super::file_manager::KeysFileStructure;
 use crate::{device::error::DeviceError, kilt::KiltConfig};
 
 pub trait KeyManager {
-    fn get_payment_account_signer(&self) -> Box<dyn Signer<KiltConfig>>;
-    fn get_did_auth_signer(&self) -> Box<dyn Signer<KiltConfig>>;
+    fn get_payment_account_signer(&self) -> PairSigner<KiltConfig, sr25519::Pair>;
+    fn get_did_auth_signer(&self) -> PairSigner<KiltConfig, sr25519::Pair>;
 }
 
 #[derive(Clone)]
@@ -28,12 +27,12 @@ impl PairKeyManager {
 }
 
 impl KeyManager for PairKeyManager {
-    fn get_payment_account_signer(&self) -> Box<dyn Signer<KiltConfig>> {
-        Box::new(PairSigner::new(self.payment_account_signer.clone()))
+    fn get_payment_account_signer(&self) -> PairSigner<KiltConfig, sr25519::Pair> {
+        PairSigner::new(self.payment_account_signer.clone())
     }
 
-    fn get_did_auth_signer(&self) -> Box<dyn Signer<KiltConfig>> {
-        Box::new(PairSigner::new(self.did_auth_signer.clone()))
+    fn get_did_auth_signer(&self) -> PairSigner<KiltConfig, sr25519::Pair> {
+        PairSigner::new(self.did_auth_signer.clone())
     }
 }
 

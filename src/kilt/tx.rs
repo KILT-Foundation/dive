@@ -1,33 +1,11 @@
 use std::str::FromStr;
 use subxt::{
-    ext::sp_runtime::MultiSignature,
-    tx::{Signer, TxPayload},
+    ext::sp_core::sr25519::Pair,
+    tx::{PairSigner, TxPayload},
     OnlineClient,
 };
 
 use super::{error::TxError, KiltConfig};
-
-pub struct BoxSigner(pub Box<dyn Signer<KiltConfig>>);
-
-impl Signer<KiltConfig> for BoxSigner {
-    fn account_id(&self) -> <KiltConfig as subxt::Config>::AccountId {
-        self.0.account_id()
-    }
-
-    fn address(&self) -> <KiltConfig as subxt::Config>::Address {
-        self.0.address()
-    }
-
-    fn sign(&self, data: &[u8]) -> MultiSignature {
-        self.0.sign(data)
-    }
-}
-
-impl From<Box<dyn Signer<KiltConfig>>> for BoxSigner {
-    fn from(value: Box<dyn Signer<KiltConfig>>) -> Self {
-        BoxSigner(value)
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct RawCall {
@@ -67,7 +45,7 @@ impl FromStr for WaitFor {
 
 pub async fn submit_call(
     chain_client: &OnlineClient<KiltConfig>,
-    signer: &BoxSigner,
+    signer: &PairSigner<KiltConfig, Pair>,
     call: &Vec<u8>,
     wait_for: WaitFor,
 ) -> Result<String, TxError> {

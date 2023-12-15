@@ -51,11 +51,13 @@ pub async fn run(
     auth_client_id: String,
     redirect_url: String,
 ) -> anyhow::Result<()> {
-    let payment_account_id = key_manager.get_payment_account_signer().account_id();
-    let did_auth_account_id = key_manager.get_did_auth_signer().account_id();
+    let payment_signer = key_manager.get_payment_account_signer();
+    let payment_account_id = payment_signer.account_id();
+    let did_auth_signer = key_manager.clone().get_did_auth_signer();
+    let did_account_id = did_auth_signer.account_id();
 
     let payment_addr = payment_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
-    let did_addr = did_auth_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
+    let did_addr = did_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
 
     log::info!("payment_account_id: {}", payment_addr);
     log::info!("DID: {}{}", DID_PREFIX, did_addr);
