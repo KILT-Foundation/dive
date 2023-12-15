@@ -26,6 +26,9 @@ pub enum ServerError {
 
 impl ResponseError for DeviceError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
+        if self.status_code() != StatusCode::INTERNAL_SERVER_ERROR {
+            log::error!("{}", self.to_string());
+        }
         HttpResponse::build(self.status_code()).body(self.to_string())
     }
 
