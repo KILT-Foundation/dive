@@ -66,13 +66,13 @@ impl FromStr for WaitFor {
 }
 
 pub async fn submit_call(
-    cli: &OnlineClient<KiltConfig>,
+    chain_client: &OnlineClient<KiltConfig>,
     signer: &BoxSigner,
     call: &Vec<u8>,
     wait_for: WaitFor,
 ) -> Result<String, TxError> {
     let call = RawCall { call: call.clone() };
-    let mut progress = cli
+    let mut progress = chain_client
         .tx()
         .sign_and_submit_then_watch_default(&call, signer)
         .await?;
