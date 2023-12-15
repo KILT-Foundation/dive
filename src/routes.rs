@@ -1,3 +1,5 @@
+use std::io::ErrorKind;
+
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::{
@@ -121,11 +123,17 @@ pub async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, Ser
         new_key_manager.get_did_auth_signer().account_id()
     );
 
-    let remove_file = tokio::fs::remove_file("base_claim.json").await;
+    let remove_file_result = tokio::fs::remove_file("base_claim.json").await;
 
-    if remove_file.is_err() {
-        let err = remove_file.unwrap_err();
-        log::info!("{}", err.to_string());
+    if remove_file_result.is_err() {
+        let err = remove_file_result.unwrap_err();
+
+        if err.kind() == ErrorKind::NotFound {
+            return Ok(HttpResponse::NotFound());
+        }
+
+        let device_err = err.into();
+        return Err(ServerError::Device(device_err));
     }
 
     let mut key_manager = app_state.key_manager.lock().await;
