@@ -1,6 +1,5 @@
-use std::string::FromUtf8Error;
-
 use hex::FromHexError;
+use std::string::FromUtf8Error;
 
 /// All possible errors while interacting with the Blockchain.
 #[derive(thiserror::Error, Debug)]
