@@ -37,10 +37,7 @@ pub async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, S
 pub async fn register_device_did(
     app_state: web::Data<AppState>,
 ) -> Result<impl Responder, ServerError> {
-    let keys = app_state
-        .key_manager
-        .lock()
-        .expect("Received poisoned lock for key manager");
+    let keys = app_state.key_manager.lock().await;
     let did_auth_signer = keys.get_did_auth_signer();
     let submitter_signer = keys.get_payment_account_signer();
     let chain_client = &app_state.chain_client;
@@ -60,10 +57,7 @@ pub async fn submit_extrinsic(
     body: web::Json<String>,
 ) -> Result<impl Responder, ServerError> {
     let chain_client = &app_state.chain_client;
-    let keys = app_state
-        .key_manager
-        .lock()
-        .expect("Received poisoned lock for key manager");
+    let keys = app_state.key_manager.lock().await;
     let signer = BoxSigner(keys.get_payment_account_signer());
     let call_string = body.0;
 
@@ -91,19 +85,12 @@ pub async fn post_base_claim(
 
     log::info!("Base claim posted: {:?}", base_claim);
 
-    let key_manager: std::sync::MutexGuard<'_, crate::device::key_manager::PairKeyManager> =
-        app_state
-            .key_manager
-            .lock()
-            .expect("Received poisoned lock for key manager");
+    let key_manager = app_state.key_manager.lock().await;
 
     let sign_pair = key_manager.get_did_auth_signer();
     let chain_client = &app_state.chain_client;
 
-    let mut jwt_token = app_state
-        .jwt_token
-        .lock()
-        .expect("Received poisoned lock for jwt_token");
+    let mut jwt_token = app_state.jwt_token.lock().await;
 
     let is_jwt_healty = check_jwt_health(&jwt_token);
 
@@ -141,26 +128,17 @@ pub async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, Ser
         log::info!("{}", err.to_string());
     }
 
-    let mut key_manager = app_state
-        .key_manager
-        .lock()
-        .expect("Received poisoned lock for key manager");
+    let mut key_manager = app_state.key_manager.lock().await;
     *key_manager = new_key_manager;
     Ok(HttpResponse::Ok())
 }
 
 pub async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
-    let key_manager = app_state
-        .key_manager
-        .lock()
-        .expect("Received poisoned lock for key manager");
+    let key_manager = app_state.key_manager.lock().await;
     let sign_pair = key_manager.get_did_auth_signer();
     let chain_client = &app_state.chain_client;
 
-    let mut jwt_token = app_state
-        .jwt_token
-        .lock()
-        .expect("Received poisoned lock for jwt_token");
+    let mut jwt_token = app_state.jwt_token.lock().await;
 
     let is_jwt_healty = check_jwt_health(&jwt_token);
 

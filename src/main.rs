@@ -11,8 +11,9 @@ use actix_files as fs;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use anyhow::Context;
 use clap::Parser;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use subxt::{ext::sp_core::crypto::Ss58Codec, OnlineClient};
+use tokio::sync::Mutex;
 
 use crate::{
     configuration::Configuration,
