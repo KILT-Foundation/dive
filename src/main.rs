@@ -11,6 +11,7 @@ use actix_files as fs;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use anyhow::Context;
 use clap::Parser;
+use routes::{get_claim_scope, get_credential_scope, get_did_scope, get_payment_scope};
 use std::sync::Arc;
 use subxt::{ext::sp_core::crypto::Ss58Codec, OnlineClient};
 use tokio::sync::Mutex;
@@ -85,32 +86,13 @@ pub async fn run(
             .wrap(Logger::default())
             .app_data(web::Data::new(app_state.clone()))
             //Did routes
-            .service(
-                web::scope("/api/v1/did")
-                    .route("", web::delete().to(crate::routes::reset))
-                    .route("", web::get().to(crate::routes::get_did))
-                    .route("", web::post().to(crate::routes::register_device_did)),
-            )
+            .service(get_did_scope())
             // claim routes
-            .service(
-                web::scope("/api/v1/claim")
-                    .route("", web::post().to(crate::routes::post_base_claim))
-                    .route("", web::get().to(crate::routes::get_base_claim)),
-            )
+            .service(get_claim_scope())
             // payment routes
-            .service(
-                web::scope("/api/v1/payment")
-                    .route(
-                        "",
-                        web::get().to(crate::routes::get_payment_account_address),
-                    )
-                    .route("", web::post().to(crate::routes::submit_extrinsic)),
-            )
+            .service(get_payment_scope())
             // Credential routes
-            .service(
-                web::scope("/api/v1/credential")
-                    .route("", web::get().to(crate::routes::get_credential)),
-            )
+            .service(get_credential_scope())
             .service(fs::Files::new("/", &source_dir).index_file("index.html"))
     })
     .bind(("0.0.0.0", port))?
