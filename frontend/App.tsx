@@ -24,6 +24,7 @@ const ctype = {
   "title": "DIVE Anlagenzertifikat",
   "type": "object"
 } as ICType
+
 const apiUrl = '/api/v1';
 
 async function getPaymentAddress() {
@@ -50,9 +51,8 @@ interface Claim {
 
 async function getClaim() {
   try {
-    const res = await ky.get(`${apiUrl}/claim`).json();
-    const requestedCredential = JSON.parse(res.base_claim);
-    return requestedCredential.claim.contents;[]
+    const requested_claim = await ky.get(`${apiUrl}/claim`).json();
+    return requested_claim.claim.contents;
   } catch (exception) {
     console.error(exception);
     return undefined;
@@ -161,7 +161,7 @@ export function App() {
         setProgress((old) => old + 1);
       }, 1000);
 
-      await ky.post(`${apiUrl}/payment`, { body: signedExtrinsic, timeout: false });
+      await ky.post(`${apiUrl}/payment`, { json: signedExtrinsic, timeout: false });
       confirm('Did is created!')
 
       setOwnerDIDReady(true);
@@ -195,7 +195,6 @@ export function App() {
       Standort: json["Standort"],
     }
 
-    console.log(newJson, boxDid)
 
     const newClaim = Claim.fromCTypeAndClaimContents(ctype, newJson, boxDid)
     const newCredential = Credential.fromClaim(newClaim);
