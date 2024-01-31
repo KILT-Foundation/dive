@@ -1,3 +1,6 @@
+use base58::FromBase58;
+use serde_with::{serde_as, Bytes};
+use sodiumoxide::crypto::box_;
 use sp_core::H256;
 use std::str::FromStr;
 use subxt::{
@@ -6,10 +9,13 @@ use subxt::{
     OnlineClient,
 };
 
-use crate::kilt::{
-    error::{DidError, TxError},
-    runtime::{runtime_types, storage},
-    KiltConfig,
+use crate::{
+    error::ServerError,
+    kilt::{
+        error::{DidError, TxError},
+        runtime::{runtime_types, storage},
+        KiltConfig,
+    },
 };
 
 use super::runtime::{
@@ -70,4 +76,37 @@ pub async fn create_did(
         .wait_for_finalized_success()
         .await?;
     Ok(events.extrinsic_hash())
+}
+
+#[serde_as]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct LightDidKeyDetails {
+    #[serde_as(as = "Bytes")]
+    #[serde(rename = "publicKey")]
+    public_key: Vec<u8>,
+    #[serde(rename = "type")]
+    type_: String,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+struct LightDIDDetails {
+    e: LightDidKeyDetails,
+}
+
+pub fn parse_encryption_key_from_lightdid(did: &str) -> Result<box_::PublicKey, ServerError> {
+    // example did:kilt:light:00${authAddress}:${details}#encryption
+    let mut parts = did.split('#');
+    let first = parts.next().ok_or(ServerError::LightDID("malformed"))?;
+    let mut parts = first.split(':').skip(4);
+    let details = parts.next().ok_or(ServerError::LightDID("malformed"))?;
+
+    let mut chars = details.chars();
+    chars.next().ok_or(ServerError::LightDID("malformed"))?;
+    let bs: Vec<u8> = FromBase58::from_base58(chars.as_str())
+        .map_err(|_| ServerError::LightDID("malformed base58"))?;
+
+    let details: LightDIDDetails =
+        serde_cbor::from_slice(&bs[1..]).map_err(|_| ServerError::LightDID("Deserialization"))?;
+    box_::PublicKey::from_slice(&details.e.public_key)
+        .ok_or(ServerError::LightDID("Not a valid public key"))
 }

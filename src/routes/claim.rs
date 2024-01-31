@@ -24,7 +24,7 @@ async fn post_base_claim(
 ) -> Result<impl Responder, ServerError> {
     let base_claim = body.0;
 
-    log::info!("Base claim posted: {:?}", base_claim);
+    log::debug!("Base claim posted: {:?}", base_claim);
 
     let key_manager = app_state.key_manager.lock().await;
 
