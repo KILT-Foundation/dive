@@ -1,6 +1,7 @@
 pub mod did_helper;
 pub mod error;
 pub mod tx;
+pub mod well_known_did_configuration;
 
 use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
 use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config};

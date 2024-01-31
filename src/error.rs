@@ -22,6 +22,12 @@ pub enum ServerError {
     URL(#[from] url::ParseError),
     #[error("Login error: {0}")]
     Login(&'static str),
+    #[error("Challenge error: {0}")]
+    Challenge(&'static str),
+    #[error("LightDID error: {0}")]
+    LightDID(&'static str),
+    #[error("Attestation error: {0}")]
+    Attestation(&'static str),
 }
 
 impl ResponseError for DeviceError {
@@ -85,11 +91,14 @@ impl ResponseError for ServerError {
         match self {
             ServerError::Device(e) => e.status_code(),
             ServerError::Tx(e) => e.status_code(),
-            ServerError::Json(..) => StatusCode::BAD_REQUEST,
+            ServerError::Json(..) | ServerError::Challenge(..) | ServerError::LightDID(..) => {
+                StatusCode::BAD_REQUEST
+            }
             ServerError::HttpClient(..)
             | ServerError::HttpClientHeader(..)
             | ServerError::URL(..)
-            | ServerError::Login(..) => StatusCode::INTERNAL_SERVER_ERROR,
+            | ServerError::Login(..)
+            | ServerError::Attestation(..) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
