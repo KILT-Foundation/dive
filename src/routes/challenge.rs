@@ -22,6 +22,7 @@ pub struct ChallengeData {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChallengeResponse {
+    #[serde(alias = "encryptionKeyId")]
     pub encryption_key_uri: String,
     #[serde(with = "prefixed_hex")]
     pub encrypted_challenge: Vec<u8>,
@@ -36,7 +37,7 @@ async fn challenge_handler(
 ) -> Result<HttpResponse, ServerError> {
     let app_name = state.app_name.clone();
 
-    let encryption_key_uri = state.key_uri.clone();
+    let encryption_key_uri = state.session_encryption_public_key_uri.clone();
 
     let challenge = Uuid::new_v4().as_bytes().to_vec();
 
@@ -76,7 +77,7 @@ async fn challenge_response_handler(
     )
     .map_err(|_| ServerError::Challenge("Unable to decrypt"))?;
 
-    if decrypted_challenge == challenge {
+    if decrypted_challenge != challenge {
         return Err(ServerError::Challenge("Challenge do not match"));
     }
 

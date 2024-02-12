@@ -8,18 +8,24 @@ import {
 } from "react";
 import ReactJson from "react-json-view";
 import ky from "ky";
-import type {
-  DidUri,
-  KiltAddress,
-  ICredential,
-  IClaimContents,
-  ICType,
-} from "@kiltprotocol/types";
+import type { DidUri, IClaimContents, ICType } from "@kiltprotocol/types";
+import {
+  InjectedWindowProvider,
+  getExtensions,
+} from "@kiltprotocol/kilt-extension-api";
 
 import { Credential, Claim } from "@kiltprotocol/core";
-import { useAsyncValue } from "./useAsyncValue";
-import oliLogo from "./OLI.png";
-import kiltLogo from "./built-on-kilt.svg";
+import { useAsyncValue } from "./util/useAsyncValue";
+import oliLogo from "./resources/OLI.png";
+import kiltLogo from "./resources/built-on-kilt.svg";
+import { getSession } from "./api/session";
+import {
+  getClaim,
+  getCredential,
+  getExistingDid,
+  getPaymentAddress,
+  API_URL,
+} from "./api/backend";
 
 const ctype = {
   $id: "kilt:ctype:0xc945ec1d1bc96dcef2c6f1198047c2be7edf7beb5f82c418a19c6614033c6256",
@@ -41,58 +47,10 @@ const ctype = {
   type: "object",
 } as ICType;
 
-const apiUrl = "/api/v1";
-
-async function getPaymentAddress() {
-  const { address } = await ky
-    .get(`${apiUrl}/payment`)
-    .json<{ address: KiltAddress }>();
-  return address;
-}
-
-async function getExistingDid() {
-  try {
-    const { did } = await ky.get(`${apiUrl}/did`).json<{ did: DidUri }>();
-    return did;
-  } catch (exception) {
-    console.error(exception);
-    return undefined;
-  }
-}
-
 interface Claim {
   "Art der Anlage": string;
   "Nennleistung (kW)": string;
   Standort: string;
-}
-
-async function getClaim() {
-  try {
-    const requested_claim = await ky
-      .get(`${apiUrl}/claim`)
-      .json<{ claim: IClaimContents }>();
-    return requested_claim.claim.contents;
-  } catch (exception) {
-    console.error(exception);
-    return undefined;
-  }
-}
-
-async function getCredential() {
-  try {
-    let response = await ky.get(`${apiUrl}/credential`).json<ICredential>();
-
-    let data = response[0];
-    console.log(data, data.approved, data.credential);
-    if (!data.approved) {
-      return undefined;
-    }
-
-    return data.credential;
-  } catch (exception) {
-    console.error(exception);
-    return undefined;
-  }
 }
 
 export function App() {
@@ -131,7 +89,7 @@ export function App() {
     try {
       setBoxDidPending(true);
 
-      await ky.post(`${apiUrl}/did`, { timeout: false }).json();
+      await ky.post(`${API_URL}/did`, { timeout: false }).json();
     } catch (error) {
       console.error(error);
     } finally {
@@ -163,7 +121,7 @@ export function App() {
           setProgress((old) => old + 1);
         }, 1000);
 
-        await ky.post(`${apiUrl}/payment`, {
+        await ky.post(`${API_URL}/payment`, {
           json: signedExtrinsic,
           timeout: false,
         });
@@ -208,7 +166,7 @@ export function App() {
       const newClaim = Claim.fromCTypeAndClaimContents(ctype, newJson, boxDid);
       const newCredential = Credential.fromClaim(newClaim);
 
-      await ky.post(`${apiUrl}/claim`, { json: newCredential });
+      await ky.post(`${API_URL}/claim`, { json: newCredential });
     },
     [boxDid]
   );
@@ -226,6 +184,18 @@ export function App() {
       await ky.delete("/api/v1/did");
       window.location.reload();
     })();
+  }, []);
+
+  const handleCredentialFlow = useCallback(async () => {
+    const extensions = getExtensions();
+    const extensionName = "Sporran";
+    const extension: InjectedWindowProvider = extensions.find(
+      (val) => val.name === extensionName
+    );
+
+    let bla = await getSession(extension);
+
+    console.log(bla);
   }, []);
 
   return (
@@ -382,6 +352,8 @@ export function App() {
                 ))}
               </ul>
             )}
+
+            <button onClick={handleCredentialFlow}>Test Credential API</button>
           </Fragment>
         )}
       </section>

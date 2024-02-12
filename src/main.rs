@@ -52,8 +52,8 @@ pub struct AppState {
     pub redirect_url: String,
     pub well_known_did_config: WellKnownDidConfig,
     pub app_name: String,
-    pub key_uri: String,
-    pub encryption_key_uri: String,
+    pub well_known_key_uri: String,
+    pub session_encryption_public_key_uri: String,
     pub secret_key: SecretKey,
 }
 
@@ -67,8 +67,8 @@ pub async fn run(
     auth_client_id: String,
     redirect_url: String,
     well_known_did_config: WellKnownDidConfig,
-    key_uri: String,
-    encryption_key_uri: String,
+    well_known_key_uri: String,
+    session_encryption_public_key_uri: String,
     secret_key: SecretKey,
 ) -> anyhow::Result<()> {
     let payment_signer = key_manager.get_payment_account_signer();
@@ -102,8 +102,8 @@ pub async fn run(
         did_addr,
         redirect_url,
         well_known_did_config,
-        key_uri,
-        encryption_key_uri,
+        well_known_key_uri,
+        session_encryption_public_key_uri,
         secret_key,
     };
 
@@ -168,8 +168,8 @@ async fn main() -> anyhow::Result<()> {
     let attester_endpoint = config.attester_endpoint;
     let auth_client_id = config.auth_client_id;
     let redirect_url = config.redirect_url;
-    let key_uri = config.key_uri;
-    let encryption_key_uri = config.encryption_key_uri;
+    let well_known_key_uri = config.well_known_key_uri;
+    let session_encryption_public_key_uri = config.session_encryption_public_key_uri;
 
     let key_manager = {
         if exists_key_file() {
@@ -192,8 +192,8 @@ async fn main() -> anyhow::Result<()> {
         auth_client_id,
         redirect_url,
         well_known_did_config_raw,
-        key_uri,
-        encryption_key_uri,
+        well_known_key_uri,
+        session_encryption_public_key_uri,
         secret_key,
     )
     .await

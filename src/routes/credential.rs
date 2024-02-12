@@ -100,7 +100,7 @@ async fn get_terms(
     let others_pubkey =
         crate::kilt::did_helper::parse_encryption_key_from_lightdid(&sender_key_uri)?;
 
-    let encryption_key_uri = state.encryption_key_uri.clone();
+    let encryption_key_uri = state.session_encryption_public_key_uri.clone();
 
     let sender = encryption_key_uri
         .split('#')
