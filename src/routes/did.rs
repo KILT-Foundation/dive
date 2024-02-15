@@ -5,7 +5,10 @@ use crate::{
     device::key_manager::KeyManager,
     dto::{DidAddress, TxResponse},
     error::ServerError,
-    kilt::did_helper::{create_did, query_did_doc, DID_PREFIX},
+    kilt::{
+        did_helper::{query_did_doc, DID_PREFIX},
+        tx::create_did,
+    },
     AppState,
 };
 

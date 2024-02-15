@@ -26,8 +26,16 @@ pub enum ServerError {
     Challenge(&'static str),
     #[error("LightDID error: {0}")]
     LightDID(&'static str),
+    #[error("LightDID error: {0}")]
+    Did(&'static str),
     #[error("Attestation error: {0}")]
     Attestation(&'static str),
+    #[error("Subxt error: {0}")]
+    Subxt(#[from] subxt::Error),
+    #[error("Hex error: {0}")]
+    Hex(#[from] hex::FromHexError),
+    #[error("Server error: {0}")]
+    ActixWeb(#[from] actix_web::Error),
 }
 
 impl ResponseError for DeviceError {
@@ -89,15 +97,19 @@ impl ResponseError for ServerError {
 
     fn status_code(&self) -> StatusCode {
         match self {
+            ServerError::ActixWeb(e) => e.as_response_error().status_code(),
             ServerError::Device(e) => e.status_code(),
             ServerError::Tx(e) => e.status_code(),
-            ServerError::Json(..) | ServerError::Challenge(..) | ServerError::LightDID(..) => {
-                StatusCode::BAD_REQUEST
-            }
+            ServerError::Json(..)
+            | ServerError::Challenge(..)
+            | ServerError::LightDID(..)
+            | ServerError::Did(..)
+            | ServerError::Hex(..) => StatusCode::BAD_REQUEST,
             ServerError::HttpClient(..)
             | ServerError::HttpClientHeader(..)
             | ServerError::URL(..)
             | ServerError::Login(..)
+            | ServerError::Subxt(..)
             | ServerError::Attestation(..) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

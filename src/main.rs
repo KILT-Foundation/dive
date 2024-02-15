@@ -7,6 +7,7 @@ mod kilt;
 mod routes;
 mod utils;
 
+use actix_cors::Cors;
 use actix_files as fs;
 use actix_session::{
     config::{CookieContentSecurity, PersistentSession},
@@ -22,7 +23,12 @@ use routes::{
 };
 use sodiumoxide::crypto::box_::SecretKey;
 use std::sync::Arc;
-use subxt::{ext::sp_core::crypto::Ss58Codec, OnlineClient};
+use subxt::{
+    ext::sp_core::{crypto::Ss58Codec, sr25519::Pair},
+    tx::PairSigner,
+    utils::AccountId32,
+    OnlineClient,
+};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -41,20 +47,33 @@ use crate::{
 
 #[derive(Clone)]
 pub struct AppState {
+    // key manager for handling the Did keys and payment account
     pub key_manager: Arc<Mutex<PairKeyManager>>,
+    // api instance to interact with the blockchain.
     pub chain_client: Arc<OnlineClient<KiltConfig>>,
     pub auth_endpoint: String,
     pub attester_endpoint: String,
     pub auth_client_id: String,
+    // jwt token used for login to the attester service. Created by OpenDid instance
     pub jwt_token: Arc<Mutex<String>>,
+    // payment addr for paying tx
     pub payment_addr: String,
+    // Did addr for the olibox
     pub did_addr: String,
+    // Redirect url needed for OpenDid
     pub redirect_url: String,
     pub well_known_did_config: WellKnownDidConfig,
+    // App name for creating credentials
     pub app_name: String,
     pub well_known_key_uri: String,
+    // Public key
     pub session_encryption_public_key_uri: String,
+    // Secret key for encryption. Needed for credential api
     pub secret_key: SecretKey,
+    // key pair for creating credentials
+    pub signer: Arc<PairSigner<KiltConfig, Pair>>,
+    // Did for creating credentials
+    pub did_attester: AccountId32,
 }
 
 pub async fn run(
@@ -70,6 +89,8 @@ pub async fn run(
     well_known_key_uri: String,
     session_encryption_public_key_uri: String,
     secret_key: SecretKey,
+    signer: PairSigner<KiltConfig, Pair>,
+    did_attester: AccountId32,
 ) -> anyhow::Result<()> {
     let payment_signer = key_manager.get_payment_account_signer();
     let payment_account_id = payment_signer.account_id();
@@ -80,7 +101,7 @@ pub async fn run(
     let did_addr = did_account_id.to_ss58check_with_version(ADDRESS_FORMAT.into());
 
     log::info!("payment_account_id: {}", payment_addr);
-    log::info!("DID: {}{}", DID_PREFIX, did_addr);
+    log::info!("Olibox DID: {}{}", DID_PREFIX, did_addr);
 
     let api = OnlineClient::<KiltConfig>::from_url(&wss_endpoint)
         .await
@@ -94,6 +115,7 @@ pub async fn run(
         key_manager: Arc::new(Mutex::new(key_manager)),
         chain_client: Arc::new(api),
         jwt_token: Arc::new(Mutex::new(String::new())),
+        signer: Arc::new(signer),
         app_name: "Olibox".to_string(),
         attester_endpoint,
         auth_client_id,
@@ -105,13 +127,16 @@ pub async fn run(
         well_known_key_uri,
         session_encryption_public_key_uri,
         secret_key,
+        did_attester,
     };
 
     // if a thread receives a poisoned lock we panic the main thread.
     utils::set_panic_hook();
 
     HttpServer::new(move || {
+        let cors = Cors::permissive();
         App::new()
+            .wrap(cors)
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), Key::generate())
                     .cookie_content_security(CookieContentSecurity::Private)
@@ -160,7 +185,9 @@ async fn main() -> anyhow::Result<()> {
         .context("Creating Well known did config failed")?;
 
     let secret_key = config.get_secret_key()?;
+    let did_attester = config.get_did()?;
 
+    let signer = config.get_credential_signer()?;
     let source_dir = config.front_end_path;
     let wss_endpoint = config.wss_address;
     let port = config.port;
@@ -195,6 +222,8 @@ async fn main() -> anyhow::Result<()> {
         well_known_key_uri,
         session_encryption_public_key_uri,
         secret_key,
+        signer,
+        did_attester,
     )
     .await
 }

@@ -16,11 +16,9 @@ export async function getSession(provider: InjectedWindowProvider): Promise<PubS
 
   const { dAppName, dAppEncryptionKeyUri, challenge } = await getChallengeReponse.json<any>()
 
-  console.log("Hello", dAppEncryptionKeyUri, challenge, dAppName, provider)
 
   const session = await provider.startSession(dAppName, dAppEncryptionKeyUri, challenge)
 
-  console.log('Here is the session', session)
 
   // post challenge and receive encrypted Message.
   const sessionVerification = await ky.post(challengeUrl, { json: session })
@@ -29,7 +27,5 @@ export async function getSession(provider: InjectedWindowProvider): Promise<PubS
     throw new Error('No valid Session.')
   }
 
-  const sessionId = await sessionVerification.json()
-
-  return { session, sessionId }
+  return session
 }
