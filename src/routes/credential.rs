@@ -7,6 +7,7 @@ use crate::{
     device::key_manager::KeyManager,
     error::ServerError,
     http_client::{check_jwt_health, get_credentials_from_attester, login_to_open_did},
+    kilt::error::CredentialAPIError,
     routes::dto::*,
     AppState,
 };
@@ -46,8 +47,8 @@ async fn get_terms(
 ) -> Result<HttpResponse, ServerError> {
     let sender_key_uri = session
         .get::<String>("encryption_key_uri")
-        .map_err(|_| ServerError::Challenge("Session not set"))?
-        .ok_or(ServerError::Challenge("Session not set"))?;
+        .map_err(|_| CredentialAPIError::Challenge("Session not set"))?
+        .ok_or(CredentialAPIError::Challenge("Session not set"))?;
 
     let others_pubkey =
         crate::kilt::did_helper::parse_encryption_key_from_lightdid(&sender_key_uri)?;
@@ -58,7 +59,7 @@ async fn get_terms(
         .split('#')
         .collect::<Vec<&str>>()
         .first()
-        .ok_or_else(|| ServerError::Attestation("Invalid Key URI for sender"))?
+        .ok_or_else(|| CredentialAPIError::Attestation("Invalid Key URI for sender"))?
         .to_owned();
 
     let content = SubmitTermsMessageContent {
@@ -112,7 +113,7 @@ async fn request_attestation(
         &others_pubkey,
         &state.secret_key,
     )
-    .map_err(|_| ServerError::Attestation("Unable to decrypt"))?;
+    .map_err(|_| CredentialAPIError::Attestation("Unable to decrypt"))?;
 
     let decrypted_message: Message<RequestAttestationMessageContent> =
         serde_json::from_slice(&decrypted_message_bytes).unwrap();

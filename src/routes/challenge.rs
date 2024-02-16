@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     error::ServerError,
+    kilt::error::CredentialAPIError,
     utils::{hex_nonce, prefixed_hex},
     AppState,
 };
@@ -43,7 +44,7 @@ async fn challenge_handler(
 
     session
         .insert("challenge", challenge.clone())
-        .map_err(|_| ServerError::Challenge("Could not insert encryption key"))?;
+        .map_err(|_| CredentialAPIError::Challenge("Could not insert encryption key"))?;
 
     let challenge_data = ChallengeData {
         challenge,
@@ -62,8 +63,8 @@ async fn challenge_response_handler(
 ) -> Result<HttpResponse, ServerError> {
     let challenge = session
         .get::<Vec<u8>>("challenge")
-        .map_err(|_| ServerError::Challenge("Session not set"))?
-        .ok_or(ServerError::Challenge("Session not set"))?;
+        .map_err(|_| CredentialAPIError::Challenge("Session not set"))?
+        .ok_or(CredentialAPIError::Challenge("Session not set"))?;
 
     let encryption_key_uri = &challenge_response.encryption_key_uri;
     let others_pubkey =
@@ -75,15 +76,17 @@ async fn challenge_response_handler(
         &others_pubkey,
         &state.secret_key,
     )
-    .map_err(|_| ServerError::Challenge("Unable to decrypt"))?;
+    .map_err(|_| CredentialAPIError::Challenge("Unable to decrypt"))?;
 
     if decrypted_challenge != challenge {
-        return Err(ServerError::Challenge("Challenge do not match"));
+        return Err(ServerError::CredentialAPI(CredentialAPIError::Challenge(
+            "Challenge do not match",
+        )));
     }
 
     session
         .insert("encryption_key_uri", encryption_key_uri)
-        .map_err(|_| ServerError::Challenge("Could not insert encryption key"))?;
+        .map_err(|_| CredentialAPIError::Challenge("Could not insert encryption key"))?;
 
     Ok(HttpResponse::Ok().json("Ok"))
 }

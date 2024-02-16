@@ -4,17 +4,14 @@ use sodiumoxide::crypto::box_;
 use std::str::FromStr;
 use subxt::OnlineClient;
 
-use crate::{
-    error::ServerError,
-    kilt::{
-        error::{DidError, TxError},
-        runtime::{
-            self, runtime_types,
-            runtime_types::did::did_details::{DidDetails, DidEncryptionKey, DidPublicKey},
-            storage,
-        },
-        KiltConfig,
+use crate::kilt::{
+    error::{CredentialAPIError, DidError, TxError},
+    runtime::{
+        self, runtime_types,
+        runtime_types::did::did_details::{DidDetails, DidEncryptionKey, DidPublicKey},
+        storage,
     },
+    KiltConfig,
 };
 
 pub const DID_PREFIX: &'static str = "did:kilt:";
@@ -53,38 +50,40 @@ struct LightDID {
     details: LightDidKeyDetails,
 }
 
-pub fn parse_encryption_key_from_lightdid(did: &str) -> Result<box_::PublicKey, ServerError> {
+pub fn parse_encryption_key_from_lightdid(
+    did: &str,
+) -> Result<box_::PublicKey, CredentialAPIError> {
     // example did:kilt:light:00${authAddress}:${details}#encryption
     let first = did
         .split('#')
         .next()
-        .ok_or(ServerError::LightDID("malformed"))?;
+        .ok_or(CredentialAPIError::LightDID("malformed"))?;
 
     let details = first
         .split(':')
         .skip(4)
         .next()
-        .ok_or(ServerError::LightDID("malformed"))?;
+        .ok_or(CredentialAPIError::LightDID("malformed"))?;
 
     let bs: Vec<u8> = details
         .chars()
         .skip(1)
         .collect::<String>()
         .from_base58()
-        .map_err(|_| ServerError::LightDID("malformed base58"))?;
+        .map_err(|_| CredentialAPIError::LightDID("malformed base58"))?;
 
-    let light_did: LightDID =
-        serde_cbor::from_slice(&bs[1..]).map_err(|_| ServerError::LightDID("Deserialization"))?;
+    let light_did: LightDID = serde_cbor::from_slice(&bs[1..])
+        .map_err(|_| CredentialAPIError::LightDID("Deserialization"))?;
     box_::PublicKey::from_slice(&light_did.details.public_key)
-        .ok_or(ServerError::LightDID("Not a valid public key"))
+        .ok_or(CredentialAPIError::LightDID("Not a valid public key"))
 }
 
 pub async fn get_did_doc(
     did: &str,
     cli: &OnlineClient<KiltConfig>,
-) -> Result<DidDetails, ServerError> {
+) -> Result<DidDetails, CredentialAPIError> {
     let did = subxt::utils::AccountId32::from_str(did.trim_start_matches("did:kilt:"))
-        .map_err(|_| ServerError::Did("Invalid DID"))?;
+        .map_err(|_| CredentialAPIError::Did("Invalid DID"))?;
     let did_doc_key = runtime::storage().did().did(&did);
     let details = cli
         .storage()
@@ -92,22 +91,22 @@ pub async fn get_did_doc(
         .await?
         .fetch(&did_doc_key)
         .await?
-        .ok_or(ServerError::Did("DID not found"))?;
+        .ok_or(CredentialAPIError::Did("DID not found"))?;
 
     Ok(details)
 }
 
-fn parse_key_uri(key_uri: &str) -> Result<(&str, sp_core::H256), ServerError> {
+fn parse_key_uri(key_uri: &str) -> Result<(&str, sp_core::H256), CredentialAPIError> {
     let key_uri_parts: Vec<&str> = key_uri.split('#').collect();
     if key_uri_parts.len() != 2 {
-        return Err(ServerError::Did("Invalid sender key URI"));
+        return Err(CredentialAPIError::Did("Invalid sender key URI"));
     }
     let did = key_uri_parts[0];
     let key_id = key_uri_parts[1];
     let kid_bs: [u8; 32] = hex::decode(key_id.trim_start_matches("0x"))
-        .map_err(|_| ServerError::Did("key ID isn't valid hex"))?
+        .map_err(|_| CredentialAPIError::Did("key ID isn't valid hex"))?
         .try_into()
-        .map_err(|_| ServerError::Did("key ID is expected to have 32 bytes"))?;
+        .map_err(|_| CredentialAPIError::Did("key ID is expected to have 32 bytes"))?;
     let kid = sp_core::H256::from(kid_bs);
 
     Ok((did, kid))
@@ -116,7 +115,7 @@ fn parse_key_uri(key_uri: &str) -> Result<(&str, sp_core::H256), ServerError> {
 pub async fn get_encryption_key_from_fulldid_key_uri(
     key_uri: &str,
     chain_client: &OnlineClient<KiltConfig>,
-) -> Result<box_::PublicKey, ServerError> {
+) -> Result<box_::PublicKey, CredentialAPIError> {
     let (did, kid) = parse_key_uri(key_uri)?;
     let doc = get_did_doc(did, chain_client).await?;
 
@@ -125,11 +124,11 @@ pub async fn get_encryption_key_from_fulldid_key_uri(
         .0
         .iter()
         .find(|&(k, _v)| *k == kid)
-        .ok_or(ServerError::Did("Could not get sender public key"))?;
+        .ok_or(CredentialAPIError::Did("Could not get sender public key"))?;
     let pk = if let DidPublicKey::PublicEncryptionKey(DidEncryptionKey::X25519(pk)) = details.key {
         pk
     } else {
-        return Err(ServerError::Did("Invalid sender public key"));
+        return Err(CredentialAPIError::Did("Invalid sender public key"));
     };
-    box_::PublicKey::from_slice(&pk).ok_or(ServerError::Did("Invalid sender public key"))
+    box_::PublicKey::from_slice(&pk).ok_or(CredentialAPIError::Did("Invalid sender public key"))
 }
