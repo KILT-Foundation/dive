@@ -2,64 +2,73 @@ import ky from "ky";
 import type {
     DidUri,
     KiltAddress,
-    ICredential,
     IClaimContents,
 } from "@kiltprotocol/types";
+import { AttestationResponse } from "../types";
 
 export const API_URL = "http://localhost:3333/api/v1";
 
 export async function getPaymentAddress() {
-    const { address } = await ky
-        .get(`${API_URL}/payment`)
-        .json<{ address: KiltAddress }>();
+
+    let response = await ky
+        .get(`${API_URL}/payment`);
+
+    if (response.status !== 200) {
+        return undefined;
+    }
+
+    const { address } =
+        await response.json<{ address: KiltAddress }>();
 
 
     return address;
 }
 
 export async function getExistingDid() {
-    try {
-        const response = await ky.get(`${API_URL}/did`);
-        if (response.status === 404) {
-            return undefined;
-        }
-        const { did } = await response.json<{ did: DidUri }>();
-        return did;
-    } catch (exception) {
-        console.error(exception);
+
+    const response = await ky.get(`${API_URL}/did`);
+    if (response.status !== 200) {
         return undefined;
     }
+    const { did } = await response.json<{ did: DidUri }>();
+    return did;
+
 }
 
 export async function getClaim() {
-    try {
-        const response = await ky
-            .get(`${API_URL}/claim`);
 
-        if (response.status === 404) {
-            return undefined;
-        }
+    const response = await ky
+        .get(`${API_URL}/claim`);
 
-        let requestedClaim = await response.json<{ claim: IClaimContents }>();
-
-        return requestedClaim.claim.contents;
-    } catch (exception) {
+    if (response.status !== 200) {
         return undefined;
     }
+
+    let requestedClaim = await response.json<{ claim: IClaimContents }>();
+
+    return requestedClaim.claim.contents;
+
 }
 
 export async function getCredential() {
-    try {
-        let response = await ky.get(`${API_URL}/credential`, { timeout: false }).json<ICredential>();
 
-        let data = response[0];
-        if (!data.approved) {
-            return undefined;
-        }
+    let response = await ky.get(`${API_URL}/credential`, { timeout: false });
 
-        return data.credential;
-    } catch (exception) {
-        console.error(exception);
+    if (response.status !== 200) {
         return undefined;
     }
+
+    let data = await response.json<AttestationResponse[]>();
+
+    if (data.length === 0) {
+        return undefined;
+    }
+
+    let attestation = data[0]
+    if (!attestation.approved) {
+        return undefined;
+    }
+
+    return attestation.credential;
+
 }

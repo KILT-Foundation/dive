@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useState } from "react";
+import { FormEvent, Fragment, useEffect, useState } from "react";
+import type { DidUri, KiltAddress } from "@kiltprotocol/types";
 
 const OperatorComponent = ({
   address,
@@ -9,6 +10,19 @@ const OperatorComponent = ({
   ownerDIDs,
   handleCreateOwnerDIDClick,
   handleGetOwnerDIDsClick,
+}: {
+  address: KiltAddress;
+  ownerDidPending: boolean;
+  boxDidPending: boolean;
+  progress: number;
+  ownerDIDReady: boolean;
+  ownerDIDs: { did: DidUri; name?: string }[];
+  handleCreateOwnerDIDClick: (
+    event: FormEvent<HTMLButtonElement>
+  ) => Promise<void>;
+  handleGetOwnerDIDsClick: (
+    event: FormEvent<HTMLButtonElement>
+  ) => Promise<void>;
 }) => {
   const [extensions, setExtensions] = useState(window.kilt);
 

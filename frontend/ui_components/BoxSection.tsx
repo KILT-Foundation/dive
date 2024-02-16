@@ -2,7 +2,7 @@ import { Claim, Credential } from "@kiltprotocol/core";
 import { FormEvent, useCallback, useRef } from "react";
 import ReactJson from "react-json-view";
 import ky from "ky";
-import type { IClaimContents } from "@kiltprotocol/types";
+import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
 import { certificateCtype, selfIssuedCtype } from "../ctypes";
 import { API_URL, getClaim, getCredential } from "../api/backend";
@@ -20,6 +20,12 @@ function BoxComponent({
   handleCreateBoxDIDClick,
   ownerDidPending,
   progress,
+}: {
+  boxDid: DidUri;
+  boxDidPending: boolean;
+  handleCreateBoxDIDClick: () => Promise<void>;
+  ownerDidPending: boolean;
+  progress: number;
 }) {
   // async states
   const credential = useAsyncValue(getCredential, []);
@@ -37,18 +43,18 @@ function BoxComponent({
       const formData = new FormData(event.currentTarget);
       const json = Object.fromEntries(formData.entries());
 
-      const newJson = {
+      const claimContent = {
         "Art der Anlage": json["Art der Anlage"],
         "Nennleistung (kW)": parseInt(json["Nennleistung (kW)"] as string, 10),
         Standort: json["Standort"],
       } as IClaimContents;
 
-      const newClaim = Claim.fromCTypeAndClaimContents(
+      const claim = Claim.fromCTypeAndClaimContents(
         certificateCtype,
-        newJson,
+        claimContent,
         boxDid
       );
-      const newCredential = Credential.fromClaim(newClaim);
+      const newCredential = Credential.fromClaim(claim);
 
       await ky.post(`${API_URL}/claim`, { json: newCredential });
     },
@@ -78,7 +84,7 @@ function BoxComponent({
       );
 
       let session = await getSession(extension);
-      let blabla = await fetchCredential(session, claim);
+      await fetchCredential(session, claim);
     },
     []
   );

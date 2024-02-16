@@ -7,6 +7,11 @@ export async function fetchCredential(session: PubSubSessionV1 | PubSubSessionV2
 
 
   const getTermsResponse = await ky.post(credentialUrl + "/terms", { json: claim });
+
+  if (getTermsResponse.status !== 200) {
+    throw Error("Failed to get terms", await getTermsResponse.json())
+  }
+
   const data = await getTermsResponse.json();
 
 
@@ -21,7 +26,10 @@ export async function fetchCredential(session: PubSubSessionV1 | PubSubSessionV2
     }
   })
 
-  const response = await ky.post(credentialUrl, { json: getCredentialRequestFromExtension, timeout: false });
+  const credentialResponse = await ky.post(credentialUrl, { json: getCredentialRequestFromExtension, timeout: false });
 
-  console.log(response)
+  if (credentialResponse.status !== 200) {
+    throw Error("Failed to get terms", await credentialResponse.json())
+  }
+
 }
