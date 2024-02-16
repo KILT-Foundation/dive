@@ -20,18 +20,14 @@ pub struct Configuration {
     pub port: u16,
     #[clap(env)]
     pub front_end_path: String,
-    // URL endpoint to attester service.
     #[clap(env)]
     pub attester_endpoint: String,
     #[clap(env)]
-    // URL endpoint to OpenDid instance
     pub auth_endpoint: String,
     #[clap(env)]
     pub auth_client_id: String,
     #[clap(env)]
-    // Redirect url needed for OpenDid
     pub redirect_url: String,
-    // well known did
     #[clap(env)]
     pub well_known_did: String,
     #[clap(env)]
@@ -40,15 +36,12 @@ pub struct Configuration {
     pub well_known_key_uri: String,
     #[clap(env)]
     pub well_known_seed: String,
-    // credential session
     #[clap(env)]
     pub session_encryption_public_key_uri: String,
     #[clap(env)]
     session_encryption_key_secret: String,
-    // Seed for attestation key for the Did
     #[clap(env)]
     attestation_seed: String,
-    // The Did for attestation
     #[clap(env)]
     pub attestation_did_seed: String,
 }
