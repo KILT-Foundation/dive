@@ -49,8 +49,8 @@ struct LightDidKeyDetails {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-struct LightDIDDetails {
-    e: LightDidKeyDetails,
+struct LightDID {
+    details: LightDidKeyDetails,
 }
 
 pub fn parse_encryption_key_from_lightdid(did: &str) -> Result<box_::PublicKey, ServerError> {
@@ -73,9 +73,9 @@ pub fn parse_encryption_key_from_lightdid(did: &str) -> Result<box_::PublicKey, 
         .from_base58()
         .map_err(|_| ServerError::LightDID("malformed base58"))?;
 
-    let details: LightDIDDetails =
+    let light_did: LightDID =
         serde_cbor::from_slice(&bs[1..]).map_err(|_| ServerError::LightDID("Deserialization"))?;
-    box_::PublicKey::from_slice(&details.e.public_key)
+    box_::PublicKey::from_slice(&light_did.details.public_key)
         .ok_or(ServerError::LightDID("Not a valid public key"))
 }
 
