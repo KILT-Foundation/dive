@@ -134,9 +134,8 @@ pub async fn run(
     utils::set_panic_hook();
 
     HttpServer::new(move || {
-        let cors = Cors::permissive();
         App::new()
-            .wrap(cors)
+            .wrap(Cors::permissive())
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), Key::generate())
                     .cookie_content_security(CookieContentSecurity::Private)
