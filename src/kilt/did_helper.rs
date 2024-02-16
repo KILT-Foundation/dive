@@ -55,14 +55,22 @@ struct LightDIDDetails {
 
 pub fn parse_encryption_key_from_lightdid(did: &str) -> Result<box_::PublicKey, ServerError> {
     // example did:kilt:light:00${authAddress}:${details}#encryption
-    let mut parts = did.split('#');
-    let first = parts.next().ok_or(ServerError::LightDID("malformed"))?;
-    let mut parts = first.split(':').skip(4);
-    let details = parts.next().ok_or(ServerError::LightDID("malformed"))?;
+    let first = did
+        .split('#')
+        .next()
+        .ok_or(ServerError::LightDID("malformed"))?;
 
-    let mut chars = details.chars();
-    chars.next().ok_or(ServerError::LightDID("malformed"))?;
-    let bs: Vec<u8> = FromBase58::from_base58(chars.as_str())
+    let details = first
+        .split(':')
+        .skip(4)
+        .next()
+        .ok_or(ServerError::LightDID("malformed"))?;
+
+    let bs: Vec<u8> = details
+        .chars()
+        .skip(1)
+        .collect::<String>()
+        .from_base58()
         .map_err(|_| ServerError::LightDID("malformed base58"))?;
 
     let details: LightDIDDetails =
