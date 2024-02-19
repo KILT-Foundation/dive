@@ -69,4 +69,25 @@ impl Configuration {
         let pair = sr25519::Pair::from_string_with_seed(&self.attestation_did_seed, None)?.0;
         Ok(pair.public().into())
     }
+
+    #[cfg(test)]
+    pub fn get_test_config() -> Self {
+        Configuration {
+            wss_address: "wss://peregrine.kilt.io:443/parachain-public-ws".to_string(),
+            port: 7777,
+            front_end_path: "does/not/matter".to_string(),
+            attester_endpoint: "http://0.0.0.0:4444".to_string(),
+            auth_endpoint: "http://0.0.0.0:5656".to_string(),
+            auth_client_id: "default".to_string(),
+            redirect_url: "http://0.0.0.0:3333".to_string(),
+            well_known_did: "did:kilt:4qGqegcXWctkdLToCSFfBAUQE5V5SBdwivaB6miWgXS6C6Cf".to_string(),
+            well_known_origin: "http://localhost:3333".to_string(),
+            well_known_key_uri: "http://localhost:3333".to_string(),
+            well_known_seed: "pave pattern upon invest humble squirrel cram flight wood travel already hint//did//assertion//0".to_string(),
+            session_encryption_public_key_uri: "did:kilt:4qGqegcXWctkdLToCSFfBAUQE5V5SBdwivaB6miWgXS6C6Cf#0x4b77a1fb88c91ddd6e5ca84c821fa2c9c2f8fddb753c0f63afdda8c75c5e13af".to_string(),
+            session_encryption_key_secret: "0x2f6d186c07aca73f746e4cfe3d2600446bb518c333c77afd4fa44f62aec281b8".to_string(),
+            attestation_seed: "pave pattern upon invest humble squirrel cram flight wood travel already hint//did//assertion//0".to_string(),
+            attestation_did_seed: "pave pattern upon invest humble squirrel cram flight wood travel already hint//did//0".to_string(),
+        }
+    }
 }

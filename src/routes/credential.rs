@@ -5,10 +5,10 @@ use sp_core::H256;
 
 use crate::{
     device::key_manager::KeyManager,
+    dto::*,
     error::ServerError,
     http_client::{check_jwt_health, get_credentials_from_attester, login_to_open_did},
     kilt::error::CredentialAPIError,
-    routes::dto::*,
     AppState,
 };
 
