@@ -11,6 +11,7 @@ import BoxComponent from "./ui_components/BoxSection";
 export function App() {
   const [boxDidPending, setBoxDidPending] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
   const [boxDid, setBoxDid] = useState<DidUri>(undefined);
   const address = useAsyncValue(getPaymentAddress, []);
   const [ownerDidPending, setOwnerDidPending] = useState(false);
@@ -41,8 +42,9 @@ export function App() {
         .json<{ did: DidUri }>();
 
       setBoxDid(data.did);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
+      setError(error + "\n" + e.to_string());
+      console.error(e);
     } finally {
       setBoxDidPending(false);
       clearInterval(interval);
@@ -78,8 +80,9 @@ export function App() {
         confirm("Did is created!");
 
         setOwnerDIDReady(true);
-      } catch (error) {
-        console.error(error);
+      } catch (e) {
+        setError(error + "\n" + e.to_string());
+        console.error(e);
       } finally {
         setOwnerDidPending(false);
         clearInterval(interval);
@@ -94,8 +97,9 @@ export function App() {
         const { name } = event.currentTarget;
         const { getDidList } = window.kilt[name];
         setOwnerDIDs(await getDidList());
-      } catch (error) {
-        console.error(error);
+      } catch (e) {
+        setError(error + "\n" + e.to_string());
+        console.error(e);
       }
     },
     [address]
@@ -103,6 +107,7 @@ export function App() {
 
   return (
     <>
+      {error !== "" && error}
       <BoxComponent
         boxDid={boxDid}
         boxDidPending={boxDidPending}
