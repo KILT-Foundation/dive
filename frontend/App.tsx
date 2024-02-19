@@ -24,11 +24,11 @@ export function App() {
   useEffect(() => {
     getExistingDid()
       .then((did) => setBoxDid(did))
-      .catch((e) => setError(error + "/n" + e.to_string()));
+      .catch((e) => setError(error + "/n" + e.toString()));
 
     getPaymentAddress()
       .then((address) => setAddress(address))
-      .catch((e) => setError(error + "/n" + e.to_string()));
+      .catch((e) => setError(error + "/n" + e.toString()));
   }, []);
 
   // Callbacks
@@ -48,7 +48,7 @@ export function App() {
 
       setBoxDid(data.did);
     } catch (e) {
-      setError(error + "\n" + e.to_string());
+      setError(error + "\n" + e.toString());
       console.error(e);
     } finally {
       setBoxDidPending(false);
@@ -86,7 +86,7 @@ export function App() {
 
         setOwnerDIDReady(true);
       } catch (e) {
-        setError(error + "\n" + e.to_string());
+        setError(error + "\n" + e.toString());
         console.error(e);
       } finally {
         setOwnerDidPending(false);
@@ -103,7 +103,7 @@ export function App() {
         const { getDidList } = window.kilt[name];
         setOwnerDIDs(await getDidList());
       } catch (e) {
-        setError(error + "\n" + e.to_string());
+        setError(error + "\n" + e.toString());
         console.error(e);
       }
     },

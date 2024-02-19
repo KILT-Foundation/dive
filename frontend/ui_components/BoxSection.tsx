@@ -26,8 +26,6 @@ function BoxComponent({
   ownerDidPending: boolean;
   progress: number;
 }) {
-  // async states
-
   const [claim, setClaim] = useState(undefined);
   const [credential, setCredential] = useState(undefined);
   const [error, setError] = useState("");
@@ -37,11 +35,11 @@ function BoxComponent({
   useEffect(() => {
     getClaim()
       .then((claim) => setClaim(claim))
-      .catch((e) => setError(error + "/n" + e.to_string()));
+      .catch((e) => setError(error + "\n" + e.toString()));
 
     getCredential()
       .then((credential) => setCredential(credential))
-      .catch((e) => setError(error + "/n" + e.to_string()));
+      .catch((e) => setError(error + "\n" + e.toString()));
   }, []);
 
   // Callbacks
@@ -105,6 +103,7 @@ function BoxComponent({
   return (
     <section>
       <h1>OLI Box</h1>
+      {error !== "" && error}
 
       <section className="box">
         <h3>Anlage</h3>
