@@ -34,7 +34,7 @@ export async function getExistingDid() {
         return did;
     } catch (exception) {
         console.error(exception);
-        return undefined;
+        throw exception
     }
 }
 
@@ -51,7 +51,8 @@ export async function getClaim() {
 
         return requestedClaim.claim.contents;
     } catch (exception) {
-        return undefined;
+        console.error(exception);
+        throw exception
     }
 }
 
@@ -67,6 +68,6 @@ export async function getCredential() {
         return data.credential;
     } catch (exception) {
         console.error(exception);
-        return undefined;
+        throw exception
     }
 }

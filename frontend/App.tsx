@@ -1,8 +1,7 @@
 import { type FormEvent, useCallback, useState, useEffect } from "react";
 import ky from "ky";
-import type { DidUri } from "@kiltprotocol/types";
+import type { DidUri, KiltAddress } from "@kiltprotocol/types";
 
-import { useAsyncValue } from "./util/useAsyncValue";
 import { getExistingDid, getPaymentAddress, API_URL } from "./api/backend";
 import Footer from "./ui_components/FooterSection";
 import OperatorComponent from "./ui_components/OperatorSection";
@@ -13,7 +12,7 @@ export function App() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [boxDid, setBoxDid] = useState<DidUri>(undefined);
-  const address = useAsyncValue(getPaymentAddress, []);
+  const [address, setAddress] = useState<KiltAddress>(undefined);
   const [ownerDidPending, setOwnerDidPending] = useState(false);
   const [ownerDIDReady, setOwnerDIDReady] = useState(false);
   const [ownerDIDs, setOwnerDIDs] = useState<
@@ -23,7 +22,13 @@ export function App() {
   // useEffects
 
   useEffect(() => {
-    getExistingDid().then((did) => setBoxDid(did));
+    getExistingDid()
+      .then((did) => setBoxDid(did))
+      .catch((e) => setError(error + "/n" + e.to_string()));
+
+    getPaymentAddress()
+      .then((address) => setAddress(address))
+      .catch((e) => setError(error + "/n" + e.to_string()));
   }, []);
 
   // Callbacks

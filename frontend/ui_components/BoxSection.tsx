@@ -1,12 +1,11 @@
 import { Claim, Credential } from "@kiltprotocol/core";
-import { FormEvent, useCallback, useRef } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import ReactJson from "react-json-view";
 import ky from "ky";
 import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
 import { certificateCtype, selfIssuedCtype } from "../ctypes";
 import { API_URL, getClaim, getCredential } from "../api/backend";
-import { useAsyncValue } from "../util/useAsyncValue";
 import {
   InjectedWindowProvider,
   getExtensions,
@@ -28,8 +27,22 @@ function BoxComponent({
   progress: number;
 }) {
   // async states
-  const credential = useAsyncValue(getCredential, []);
-  const claim = useAsyncValue(getClaim, []);
+
+  const [claim, setClaim] = useState(undefined);
+  const [credential, setCredential] = useState(undefined);
+  const [error, setError] = useState("");
+
+  // callbacks
+
+  useEffect(() => {
+    getClaim()
+      .then((claim) => setClaim(claim))
+      .catch((e) => setError(error + "/n" + e.to_string()));
+
+    getCredential()
+      .then((credential) => setCredential(credential))
+      .catch((e) => setError(error + "/n" + e.to_string()));
+  }, []);
 
   // Callbacks
   const credentialDialogRef = useRef<HTMLDialogElement>();
