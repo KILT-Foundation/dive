@@ -25,50 +25,48 @@ export async function getPaymentAddress() {
 }
 
 export async function getExistingDid() {
-
-    const response = await ky.get(`${API_URL}/did`);
-    if (response.status !== 200) {
+    try {
+        const response = await ky.get(`${API_URL}/did`);
+        if (response.status === 404) {
+            return undefined;
+        }
+        const { did } = await response.json<{ did: DidUri }>();
+        return did;
+    } catch (exception) {
+        console.error(exception);
         return undefined;
     }
-    const { did } = await response.json<{ did: DidUri }>();
-    return did;
-
 }
 
 export async function getClaim() {
+    try {
+        const response = await ky
+            .get(`${API_URL}/claim`);
 
-    const response = await ky
-        .get(`${API_URL}/claim`);
+        if (response.status === 404) {
+            return undefined;
+        }
 
-    if (response.status !== 200) {
+        let requestedClaim = await response.json<{ claim: IClaimContents }>();
+
+        return requestedClaim.claim.contents;
+    } catch (exception) {
         return undefined;
     }
-
-    let requestedClaim = await response.json<{ claim: IClaimContents }>();
-
-    return requestedClaim.claim.contents;
-
 }
 
 export async function getCredential() {
+    try {
+        let response = await ky.get(`${API_URL}/credential`, { timeout: false }).json<AttestationResponse[]>();
 
-    let response = await ky.get(`${API_URL}/credential`, { timeout: false });
+        let data = response[0];
+        if (!data.approved) {
+            return undefined;
+        }
 
-    if (response.status !== 200) {
+        return data.credential;
+    } catch (exception) {
+        console.error(exception);
         return undefined;
     }
-
-    let data = await response.json<AttestationResponse[]>();
-
-    if (data.length === 0) {
-        return undefined;
-    }
-
-    let attestation = data[0]
-    if (!attestation.approved) {
-        return undefined;
-    }
-
-    return attestation.credential;
-
 }

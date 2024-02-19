@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useState } from "react";
+import { type FormEvent, useCallback, useState, useEffect } from "react";
 import ky from "ky";
 import type { DidUri } from "@kiltprotocol/types";
 
@@ -12,13 +12,19 @@ export function App() {
   // states
   const [boxDidPending, setBoxDidPending] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [boxDid, setBoxDid] = useState<DidUri>(undefined);
   const address = useAsyncValue(getPaymentAddress, []);
-  const boxDid = useAsyncValue(getExistingDid, []);
   const [ownerDidPending, setOwnerDidPending] = useState(false);
   const [ownerDIDReady, setOwnerDIDReady] = useState(false);
   const [ownerDIDs, setOwnerDIDs] = useState<
     Array<{ did: DidUri; name?: string }>
   >([]);
+
+  // useEffects
+
+  useEffect(() => {
+    getExistingDid().then((did) => setBoxDid(did));
+  }, []);
 
   // Callbacks
 
@@ -31,13 +37,16 @@ export function App() {
     try {
       setBoxDidPending(true);
 
-      await ky.post(`${API_URL}/did`, { timeout: false }).json();
+      let data = await ky
+        .post(`${API_URL}/did`, { timeout: false })
+        .json<{ did: DidUri }>();
+
+      setBoxDid(data.did);
     } catch (error) {
       console.error(error);
     } finally {
       setBoxDidPending(false);
       clearInterval(interval);
-      window.location.reload();
     }
   }, []);
 

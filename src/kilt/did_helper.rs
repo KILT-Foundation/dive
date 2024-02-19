@@ -47,7 +47,7 @@ struct LightDidKeyDetails {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct LightDID {
-    details: LightDidKeyDetails,
+    e: LightDidKeyDetails,
 }
 
 pub fn parse_encryption_key_from_lightdid(
@@ -74,7 +74,7 @@ pub fn parse_encryption_key_from_lightdid(
 
     let light_did: LightDID = serde_cbor::from_slice(&bs[1..])
         .map_err(|_| CredentialAPIError::LightDID("Deserialization"))?;
-    box_::PublicKey::from_slice(&light_did.details.public_key)
+    box_::PublicKey::from_slice(&light_did.e.public_key)
         .ok_or(CredentialAPIError::LightDID("Not a valid public key"))
 }
 

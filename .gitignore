@@ -16,3 +16,4 @@ base_claim.json
 *.ppk
 .vscode
 **/.parcel-cache
+keys.json
