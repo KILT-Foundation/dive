@@ -9,7 +9,6 @@ import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
 
 export function App() {
-  // states
   const [boxDidPending, setBoxDidPending] = useState(false);
   const [progress, setProgress] = useState(0);
   const [boxDid, setBoxDid] = useState<DidUri>(undefined);
