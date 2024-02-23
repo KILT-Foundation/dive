@@ -9,27 +9,30 @@ repository = "https://github.com/KILTprotocol/kilt-node"
 version = "0.0.1"
 
 [dependencies]
-reqwest = {version = "0.11.22", features = [
-  "cookies",
-  "json",
-  "rustls-tls",
-], default-features = false}
-
+actix-cors = "0.6.4"
 actix-files = "0.6.2"
 actix-rt = "2.4.0"
+actix-session = {version = "0.9.0", features = ["cookie-session"]}
 actix-web = "4"
 anyhow = "1.0.75"
 base58 = "0.2.0"
 base64 = "0.21.2"
 bip39 = "2.0.0"
+blake2 = "0.10.6"
 chrono = "0.4.26"
 clap = {version = "4.4.6", features = ["env", "derive"]}
 env_logger = "0.10.1"
 futures = "0.3.28"
 hex = "0.4.3"
+hmac = "0.12.1"
 libc = "0.2.147"
 log = "0.4.20"
 rand = "0.8.5"
+reqwest = {version = "0.11.22", features = [
+  "cookies",
+  "json",
+  "rustls-tls",
+], default-features = false}
 serde = {version = "1.0.188", features = ["derive"]}
 serde_cbor = "0.11.2"
 serde_json = "1.0.107"
@@ -42,6 +45,7 @@ subxt = {version = "0.31.0", features = ["substrate-compat"]}
 thiserror = "1.0.50"
 tokio = {version = "1.29", features = ["full"]}
 url = "2.4.1"
+uuid = {version = "1.4.1", features = ["v4", "serde"]}
 
 [build-dependencies]
 bindgen = "0.66.1"

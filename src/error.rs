@@ -3,7 +3,7 @@ use std::io::ErrorKind;
 
 use crate::{
     device::DeviceError,
-    kilt::error::{DidError, TxError},
+    kilt::error::{CredentialAPIError, DidError, TxError},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -22,6 +22,14 @@ pub enum ServerError {
     URL(#[from] url::ParseError),
     #[error("Login error: {0}")]
     Login(&'static str),
+    #[error("Subxt error: {0}")]
+    Subxt(#[from] subxt::Error),
+    #[error("Hex error: {0}")]
+    Hex(#[from] hex::FromHexError),
+    #[error("Server error: {0}")]
+    ActixWeb(#[from] actix_web::Error),
+    #[error("Credential API error: {0}")]
+    CredentialAPI(#[from] CredentialAPIError),
 }
 
 impl ResponseError for DeviceError {
@@ -69,6 +77,26 @@ impl ResponseError for TxError {
     }
 }
 
+impl ResponseError for CredentialAPIError {
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        if self.status_code() != StatusCode::INTERNAL_SERVER_ERROR {
+            log::error!("{}", self.to_string());
+        }
+        HttpResponse::build(self.status_code()).body(self.to_string())
+    }
+
+    fn status_code(&self) -> StatusCode {
+        match self {
+            &CredentialAPIError::Challenge(..)
+            | &CredentialAPIError::LightDID(..)
+            | &CredentialAPIError::Did(..) => StatusCode::BAD_REQUEST,
+            CredentialAPIError::Attestation(..) | CredentialAPIError::Subxt(..) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        }
+    }
+}
+
 impl ResponseError for ServerError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
         match self {
@@ -83,13 +111,16 @@ impl ResponseError for ServerError {
 
     fn status_code(&self) -> StatusCode {
         match self {
+            ServerError::ActixWeb(e) => e.as_response_error().status_code(),
             ServerError::Device(e) => e.status_code(),
             ServerError::Tx(e) => e.status_code(),
-            ServerError::Json(..) => StatusCode::BAD_REQUEST,
+            ServerError::CredentialAPI(e) => e.status_code(),
+            ServerError::Json(..) | ServerError::Hex(..) => StatusCode::BAD_REQUEST,
             ServerError::HttpClient(..)
             | ServerError::HttpClientHeader(..)
             | ServerError::URL(..)
-            | ServerError::Login(..) => StatusCode::INTERNAL_SERVER_ERROR,
+            | ServerError::Login(..)
+            | ServerError::Subxt(..) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

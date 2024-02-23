@@ -29,3 +29,17 @@ pub enum FormatError {
     #[error("Hex error: {0}")]
     Hex(#[from] FromHexError),
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum CredentialAPIError {
+    #[error("Challenge error: {0}")]
+    Challenge(&'static str),
+    #[error("LightDID error: {0}")]
+    LightDID(&'static str),
+    #[error("LightDID error: {0}")]
+    Did(&'static str),
+    #[error("Attestation error: {0}")]
+    Attestation(&'static str),
+    #[error("Subxt error: {0}")]
+    Subxt(#[from] subxt::Error),
+}

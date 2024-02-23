@@ -1,6 +1,4 @@
-import { type DidUri, type HexString, type KiltAddress } from '@kiltprotocol/sdk-js';
-
-export {};
+import type { DidUri, HexString, KiltAddress } from '@kiltprotocol/types';
 
 declare global {
   interface Window {

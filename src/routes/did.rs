@@ -1,11 +1,15 @@
 use actix_web::{delete, get, post, web, HttpResponse, Responder, Scope};
 use std::io::ErrorKind;
+use subxt::ext::sp_core::crypto::Ss58Codec;
 
 use crate::{
     device::key_manager::KeyManager,
     dto::{DidAddress, TxResponse},
     error::ServerError,
-    kilt::did_helper::{create_did, query_did_doc, DID_PREFIX},
+    kilt::{
+        did_helper::{query_did_doc, ADDRESS_FORMAT, DID_PREFIX},
+        tx::create_did,
+    },
     AppState,
 };
 
@@ -20,16 +24,31 @@ async fn register_device_did(
     let extrinsic_hash = create_did(did_auth_signer, submitter_signer, chain_client).await?;
     let tx = format!("0x{}", hex::encode(extrinsic_hash));
     log::info!("Tx hash: {}", tx);
-    Ok(HttpResponse::Ok().json(TxResponse { tx }))
+
+    let did = did_auth_signer
+        .account_id()
+        .to_ss58check_with_version(ADDRESS_FORMAT.into());
+
+    let formatted_did = format!("{}{}", DID_PREFIX, did);
+
+    Ok(HttpResponse::Ok().json(TxResponse {
+        tx,
+        did: formatted_did,
+    }))
 }
 
 #[get("")]
 async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
-    let addr = &app_state.did_addr;
+    let keys = app_state.key_manager.lock().await;
+    let did_auth_signer = &keys.get_did_auth_signer();
+
+    let did = did_auth_signer
+        .account_id()
+        .to_ss58check_with_version(ADDRESS_FORMAT.into());
     let chain_client = &app_state.chain_client;
-    query_did_doc(&addr, chain_client).await?;
+    query_did_doc(&did, chain_client).await?;
     Ok(HttpResponse::Ok().json(DidAddress {
-        did: format!("{}{}", DID_PREFIX, addr),
+        did: format!("{}{}", DID_PREFIX, did),
     }))
 }
 
@@ -42,21 +61,19 @@ async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, ServerE
         new_key_manager.get_did_auth_signer().account_id()
     );
 
+    let mut key_manager = app_state.key_manager.lock().await;
+    *key_manager = new_key_manager;
+
     let remove_file_result = tokio::fs::remove_file("base_claim.json").await;
 
     if remove_file_result.is_err() {
         let err = remove_file_result.unwrap_err();
-
         if err.kind() == ErrorKind::NotFound {
-            return Ok(HttpResponse::NotFound());
+            return Ok(HttpResponse::Ok());
         }
-
         let device_err = err.into();
         return Err(ServerError::Device(device_err));
     }
-
-    let mut key_manager = app_state.key_manager.lock().await;
-    *key_manager = new_key_manager;
     Ok(HttpResponse::Ok())
 }
 

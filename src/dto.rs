@@ -43,6 +43,7 @@ pub struct DidAddress {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct TxResponse {
     pub tx: String,
+    pub did: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]

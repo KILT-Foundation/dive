@@ -1,17 +1,26 @@
 pub mod did_helper;
 pub mod error;
 pub mod tx;
+pub mod well_known_did_configuration;
+
+mod utils;
 
 use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
 use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config};
 
 #[cfg(feature = "spiritnet")]
-#[subxt::subxt(runtime_metadata_path = "metadata_spiritnet_11110.scale")]
+#[subxt::subxt(runtime_metadata_path = "./metadata/spiritnet_11110.scale")]
+pub mod runtime {}
+
+#[cfg(feature = "spiritnet")]
+pub type RuntimeCall = runtime::runtime_types::spiritnet_runtime::RuntimeCall;
+
+#[cfg(not(feature = "spiritnet"))]
+#[subxt::subxt(runtime_metadata_path = "./metadata/peregrine_11210.scale")]
 pub mod runtime {}
 
 #[cfg(not(feature = "spiritnet"))]
-#[subxt::subxt(runtime_metadata_path = "./metadata_peregrine_11110.scale")]
-pub mod runtime {}
+pub type RuntimeCall = runtime::runtime_types::peregrine_runtime::RuntimeCall;
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct KiltConfig;
