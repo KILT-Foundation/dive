@@ -170,18 +170,15 @@ pub async fn create_claim(
 
     let created_event = events?.find_first::<runtime::attestation::events::AttestationCreated>()?;
 
-    match created_event {
-        Some(_) => {
-            log::info!("Attestation with root hash {:?} created", claim_hash);
-            Ok(encoded_call)
-        }
-        _ => {
-            log::info!(
-                "Attestation with root hash {:?} could not be created. Create Event not found",
-                claim_hash
-            );
-            Err(subxt::Error::Other("Created Event not found".to_string()))
-        }
+    if let Some(_) = created_event {
+        log::info!("Attestation with root hash {:?} created", claim_hash);
+        Ok(encoded_call)
+    } else {
+        log::info!(
+            "Attestation with root hash {:?} could not be created. Create Event not found",
+            claim_hash
+        );
+        Err(subxt::Error::Other("Created Event not found".to_string()))
     }
 }
 
