@@ -43,27 +43,6 @@ use std::collections::HashMap;
 type Blake2b256 = Blake2b<U32>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct WellKnownDidConfig {
-    pub context: String,
-    pub linked_dids: Vec<LinkedDid>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct LinkedDid {
-    pub context: Vec<String>,
-    pub issuer: String,
-    #[serde(rename = "issuanceDate")]
-    pub issuance_date: String,
-    #[serde(rename = "expirationDate")]
-    pub expiration_date: String,
-    #[serde(rename = "type")]
-    pub type_: Vec<String>,
-    #[serde(rename = "credentialSubject")]
-    pub credential_subject: CredentialSubject,
-    pub proof: Proof,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CredentialSubject {
     pub id: String,
     pub origin: String,
@@ -80,6 +59,12 @@ pub struct Proof {
     #[serde(rename = "verificationMethod")]
     pub verification_method: String,
     pub signature: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WellKnownDidConfig {
+    pub context: String,
+    pub linked_dids: Vec<LinkedDid>,
 }
 
 impl WellKnownDidConfig {
@@ -145,6 +130,21 @@ impl WellKnownDidConfig {
             linked_dids: [LinkedDid::new(id, subject, proof)].into(),
         })
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LinkedDid {
+    pub context: Vec<String>,
+    pub issuer: String,
+    #[serde(rename = "issuanceDate")]
+    pub issuance_date: String,
+    #[serde(rename = "expirationDate")]
+    pub expiration_date: String,
+    #[serde(rename = "type")]
+    pub type_: Vec<String>,
+    #[serde(rename = "credentialSubject")]
+    pub credential_subject: CredentialSubject,
+    pub proof: Proof,
 }
 
 impl LinkedDid {

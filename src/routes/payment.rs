@@ -2,7 +2,7 @@ use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 
 use crate::{
     device::key_manager::KeyManager,
-    dto::{PayerAddress, TxResponse},
+    dto::PayerAddress,
     error::ServerError,
     kilt::{
         error::{FormatError, TxError},
@@ -37,7 +37,7 @@ async fn submit_extrinsic(
     let tx = submit_call(chain_client, &signer, &call, WaitFor::Finalized).await?;
 
     log::info!("Tx hash: {}", tx);
-    Ok(HttpResponse::Ok().json(TxResponse { tx }))
+    Ok(HttpResponse::Ok())
 }
 
 pub fn get_payment_scope() -> Scope {

@@ -3,8 +3,7 @@ use std::{fs, io, path::Path, str::FromStr};
 use super::{crypto::get_random_bytes, error::DeviceError, key_manager::PairKeyManager};
 use crate::dto::Credential;
 
-const DIR_PATH: &str = "/etc/kilt";
-const KEY_FILE_PATH: &str = "/etc/kilt/keys.json";
+const KEY_FILE_PATH: &str = "./keys.json";
 const BASE_CLAIM_PATH: &str = "./base_claim.json";
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -17,7 +16,6 @@ pub(crate) struct KeysFileStructure {
 /// Save the key file to the specified path.
 fn save_key_file(key_file: &KeysFileStructure) -> Result<(), io::Error> {
     let keys_file_json = serde_json::to_string_pretty(key_file)?;
-    fs::create_dir_all(DIR_PATH)?;
     fs::write(KEY_FILE_PATH, keys_file_json)
 }
 

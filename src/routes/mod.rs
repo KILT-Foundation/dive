@@ -2,6 +2,7 @@ mod challenge;
 mod claim;
 mod credential;
 mod did;
+mod dto;
 mod payment;
 mod well_known_did_config;
 
