@@ -5,22 +5,20 @@ DEPLOY_TARGET_HOST=pi@10.10.0.2
 default: debug-build
 
 #Create a debug build
-debug-build: 
-	.build-image $(shell find ./src -type f)
+debug-build: .build-image $(shell find ./src -type f)
 	docker run --rm -it \
 		-v $(shell pwd):/app \
 		-w /app \
 		$(BUILD_IMAGE) \
-			cargo build --target=aarch64-unknown-linux-gnu $(user_input)
+		cargo build --target=aarch64-unknown-linux-gnu $(BUILD_ARGS)
 
 #Create a release build
-release-build:
-	.build-image $(shell find ./src -type f)
+release-build: .build-image $(shell find ./src -type f)
 	docker run --rm -it \
 		-v $(shell pwd):/app \
 		-w /app \
 		$(BUILD_IMAGE) \
-			cargo build --release --target=aarch64-unknown-linux-gnu
+		cargo build --release --target=aarch64-unknown-linux-gnu $(BUILD_ARGS)
 
 # deploy the release binary to the target host
 deploy: 
@@ -31,7 +29,7 @@ deploy:
 .build-image: 
 	builder.Containerfile
 	docker build -t $(BUILD_IMAGE) -f builder.Containerfile .
-	touch .build-image
+	
 
 # run the debug build locally, you will need to install ca-certificates but its a nice start
 run-locally: 
