@@ -1,11 +1,10 @@
 import { Claim, Credential } from "@kiltprotocol/core";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import ReactJson from "react-json-view";
-import ky from "ky";
 import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
 import { certificateCtype, selfIssuedCtype } from "../ctypes";
-import { API_URL, getClaim, getCredential } from "../api/backend";
+import { getClaim, getCredential, postClaim } from "../api/backend";
 import {
   InjectedWindowProvider,
   getExtensions,
@@ -67,7 +66,8 @@ function BoxComponent({
       );
       const newCredential = Credential.fromClaim(claim);
 
-      await ky.post(`${API_URL}/claim`, { json: newCredential });
+      const unapprovedClaim = await postClaim(newCredential);
+      setClaim(unapprovedClaim.contents);
     },
     [boxDid]
   );
@@ -186,7 +186,7 @@ function BoxComponent({
 
         <form onSubmit={handleSelfCredential}>
           <fieldset>
-            <legend>Selbstauskunfts Zertifikat</legend>
+            <legend>Selbstauskunftszertifikat</legend>
             <p>
               <label>
                 Name: <input name="name" required />

@@ -9,7 +9,7 @@ use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
 use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config};
 
 #[cfg(feature = "spiritnet")]
-#[subxt::subxt(runtime_metadata_path = "./metadata/spiritnet_11110.scale")]
+#[subxt::subxt(runtime_metadata_path = "./metadata/spiritnet_11210.scale")]
 pub mod runtime {}
 
 #[cfg(feature = "spiritnet")]

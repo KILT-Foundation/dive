@@ -24,11 +24,11 @@ export function App() {
   useEffect(() => {
     getExistingDid()
       .then((did) => setBoxDid(did))
-      .catch((e) => setError(error + "/n" + e.toString()));
+      .catch((e) => setError(error + "\n" + e.toString()));
 
     getPaymentAddress()
       .then((address) => setAddress(address))
-      .catch((e) => setError(error + "/n" + e.toString()));
+      .catch((e) => setError(error + "\n" + e.toString()));
   }, []);
 
   // Callbacks
