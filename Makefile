@@ -1,52 +1,40 @@
 BUILD_IMAGE=dive/builder:latest
 
-# ssh://pi@proxy51.rt3.io:37972
-# ssh://pi@proxy55.rt3.io:34097
-# ssh://pi@proxy50.rt3.io:33920
-DEPLOY_TARGET_HOST=pi@proxy50.rt3.io
-DEPLOY_TARGET_PORT=33920
-
-# default target
+DEPLOY_TARGET_HOST=pi@10.10.0.2 
+ 
 default: debug-build
 
-# shortcuts for building debug and release binaries
-debug-build: target/aarch64-unknown-linux-gnu/debug/ssi-server
-release-build: target/aarch64-unknown-linux-gnu/release/ssi-server
-
-# debug build through the build image
-# target/aarch64-unknown-linux-gnu/debug/ssi-server: .build-image $(shell find ./src -type f)
-# 	cross build --target=aarch64-unknown-linux-gnu
-target/aarch64-unknown-linux-gnu/debug/ssi-server: .build-image $(shell find ./src -type f)
-	podman run --rm -it \
+#Create a debug build
+debug-build: 
+	.build-image $(shell find ./src -type f)
+	docker run --rm -it \
 		-v $(shell pwd):/app \
 		-w /app \
 		$(BUILD_IMAGE) \
-			cargo build --target=aarch64-unknown-linux-gnu
+			cargo build --target=aarch64-unknown-linux-gnu $(user_input)
 
-# release build through the build image
-# target/aarch64-unknown-linux-gnu/release/ssi-server: .build-image $(shell find ./src -type f)
-#	cross build --release --target=aarch64-unknown-linux-gnu
-target/aarch64-unknown-linux-gnu/release/ssi-server: .build-image $(shell find ./src -type f)
-	podman run --rm -it \
+#Create a release build
+release-build:
+	.build-image $(shell find ./src -type f)
+	docker run --rm -it \
 		-v $(shell pwd):/app \
 		-w /app \
 		$(BUILD_IMAGE) \
 			cargo build --release --target=aarch64-unknown-linux-gnu
 
 # deploy the release binary to the target host
-deploy: release-build
-	scp -P $(DEPLOY_TARGET_PORT) target/aarch64-unknown-linux-gnu/release/ssi-server $(DEPLOY_TARGET_HOST):/home/pi/ssi-server 
+deploy: 
+	release-build
+	scp -P $(DEPLOY_TARGET_PORT) target/aarch64-unknown-linux-gnu/release/dive $(DEPLOY_TARGET_HOST):/home/pi/ssi-server
 
 # build the build image
-.build-image: builder.Containerfile
-	podman build -t $(BUILD_IMAGE) -f builder.Containerfile .
+.build-image: 
+	builder.Containerfile
+	docker build -t $(BUILD_IMAGE) -f builder.Containerfile .
 	touch .build-image
 
 # run the debug build locally, you will need to install ca-certificates but its a nice start
-run-locally: debug-build
-	podman run --arch arm64 -it -v .:/app -w /app debian /app/target/aarch64-unknown-linux-gnu/debug/ssi-server
-
-# clean up the build artifacts
-clean:
-	cargo clean
-	rm -f .build-image
+run-locally: 
+	debug-build
+	docker run --arch arm64 -it -v .:/app -w /app debian /app/target/aarch64-unknown-linux-gnu/debug/dive
+ 
