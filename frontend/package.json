@@ -15,7 +15,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@kiltprotocol/core": "^0.34.0",
+    "@kiltprotocol/core": "^0.35.0",
     "@kiltprotocol/kilt-extension-api": "0.1.0-alpha.3",
     "@types/react-dom": "^18.2.14",
     "ky": "^1.0.1",
