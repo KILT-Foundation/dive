@@ -4,7 +4,7 @@ import type {
     KiltAddress,
     IClaimContents,
     ICredential,
-    IClaim
+    IClaim,
 } from "@kiltprotocol/types";
 import { AttestationResponse } from "../types";
 
@@ -12,18 +12,14 @@ export const API_URL = "http://localhost:3333/api/v1";
 
 export async function getPaymentAddress() {
     try {
-        const response = await ky
-            .get(`${API_URL}/payment`);
-
-        const { address } =
-            await response.json<{ address: KiltAddress }>();
+        const response = await ky.get(`${API_URL}/payment`);
+        const { address } = await response.json<{ address: KiltAddress }>();
         return address;
     } catch (exception) {
         if ((exception as HTTPError).response.status !== 200) {
             return undefined;
         }
     }
-
 }
 
 export async function getExistingDid() {
@@ -35,14 +31,13 @@ export async function getExistingDid() {
         if ((exception as HTTPError).response.status === 404) {
             return undefined;
         }
-        throw exception
+        throw exception;
     }
 }
 
 export async function getClaim() {
     try {
-        const response = await ky
-            .get(`${API_URL}/claim`);
+        const response = await ky.get(`${API_URL}/claim`);
 
         const requestedClaim = await response.json<{ claim: IClaimContents }>();
 
@@ -52,7 +47,7 @@ export async function getClaim() {
             return undefined;
         }
         console.error(exception);
-        throw exception
+        throw exception;
     }
 }
 
@@ -62,7 +57,7 @@ export async function getCredential() {
         const data = await response.json<AttestationResponse[]>();
 
         if (data.length === 0) {
-            return undefined
+            return undefined;
         }
 
         // we are currently only supporting a single credential. Has to be changed once the olibox is able to hold multiple.
@@ -78,10 +73,9 @@ export async function getCredential() {
             return undefined;
         }
         console.error(exception);
-        throw exception
+        throw exception;
     }
 }
-
 
 export async function postClaim(claim: ICredential) {
     try {
@@ -92,6 +86,6 @@ export async function postClaim(claim: ICredential) {
         return data.claim;
     } catch (exception) {
         console.error(exception);
-        throw exception
+        throw exception;
     }
 }
