@@ -89,3 +89,14 @@ export async function postClaim(claim: ICredential) {
         throw exception;
     }
 }
+
+export async function postUseCaseParticipation(useCaseDidUrl: string, useCaseUrl: string, updateServiceEndpoint: boolean) {
+    try {
+        const response = await ky.post(`${API_URL}/use-case`, {
+            json: { useCaseDidUrl, useCaseUrl, updateServiceEndpoint },
+        });
+    } catch (exception) {
+        console.error(exception);
+        throw exception;
+    }
+} 

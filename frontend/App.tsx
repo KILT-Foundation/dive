@@ -131,8 +131,7 @@ export function App() {
         handleCreateOwnerDIDClick={handleCreateOwnerDIDClick}
         handleGetOwnerDIDsClick={handleGetOwnerDIDsClick}
       />
-      <UseCaseComponent
-      />
+      <UseCaseComponent />
       <Footer />
     </>
   );
