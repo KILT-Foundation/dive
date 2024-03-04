@@ -20,6 +20,7 @@ use anyhow::Context;
 use clap::Parser;
 use routes::{
     get_challenge_scope, get_claim_scope, get_credential_scope, get_did_scope, get_payment_scope,
+    get_use_case_scope,
 };
 use sodiumoxide::crypto::box_::SecretKey;
 use std::sync::Arc;
@@ -161,6 +162,8 @@ pub async fn run(
             .service(get_well_known_did_config_scope())
             //Challenge
             .service(get_challenge_scope())
+            //Use case routes
+            .service(get_use_case_scope())
             // Frontend
             .service(fs::Files::new("/", &source_dir).index_file("index.html"))
     })

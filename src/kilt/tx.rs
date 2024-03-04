@@ -14,8 +14,10 @@ use crate::kilt::{
         self,
         runtime_types::{
             bounded_collections::bounded_btree_set::BoundedBTreeSet,
+            bounded_collections::bounded_vec::BoundedVec,
             did::did_details::DidAuthorizedCallOperation,
             did::did_details::{DidCreationDetails, DidSignature},
+            did::service_endpoints::DidEndpoint,
             sp_core::{ecdsa, ed25519, sr25519},
         },
     },
@@ -210,4 +212,100 @@ pub async fn create_did(
         .wait_for_finalized_success()
         .await?;
     Ok(events.extrinsic_hash())
+}
+
+pub async fn add_service_endpoint(
+    did_address: &AccountId32,
+    url: &str,
+    service_id: &str,
+    service_type: &str,
+    submitter_signer: &PairSigner<KiltConfig, Pair>,
+    chain_client: &OnlineClient<KiltConfig>,
+) -> Result<(), subxt::Error> {
+    let service_endpoint = DidEndpoint {
+        id: BoundedVec(service_id.into()),
+        service_types: BoundedVec(vec![BoundedVec(service_type.into())]),
+        urls: BoundedVec(vec![BoundedVec(url.into())]),
+    };
+
+    let tx_counter = get_next_tx_counter(&chain_client, &did_address).await?;
+    let block_number = get_current_block(&chain_client).await?;
+
+    let call = RuntimeCall::Did(runtime_types::did::pallet::Call::add_service_endpoint {
+        service_endpoint,
+    });
+
+    let did_call = DidAuthorizedCallOperation {
+        did: did_address.to_owned(),
+        tx_counter,
+        call,
+        block_number,
+        submitter: submitter_signer.account_id().to_owned().into(),
+    };
+
+    let signature = calculate_signature(&did_call.encode(), submitter_signer);
+    let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
+    let events = chain_client
+        .tx()
+        .sign_and_submit_then_watch_default(&final_tx, submitter_signer)
+        .await?
+        .wait_for_finalized_success()
+        .await;
+
+    let update_event = events?.find_first::<runtime::did::events::DidUpdated>()?;
+
+    if let Some(_) = update_event {
+        log::info!("Service endpoint with url: {:?} added", url);
+        Ok(())
+    } else {
+        log::info!(
+            "Service endpoint with url: {:?} could not be added. Update Event not found",
+            url
+        );
+        Err(subxt::Error::Other("Update Event not found".to_string()))
+    }
+}
+
+pub async fn remove_service_endpoint(
+    did_address: &AccountId32,
+    service_id: &str,
+    submitter_signer: &PairSigner<KiltConfig, Pair>,
+    chain_client: &OnlineClient<KiltConfig>,
+) -> Result<(), subxt::Error> {
+    let tx_counter = get_next_tx_counter(&chain_client, &did_address).await?;
+    let block_number = get_current_block(&chain_client).await?;
+
+    let call = RuntimeCall::Did(runtime_types::did::pallet::Call::remove_service_endpoint {
+        service_id: BoundedVec(service_id.into()),
+    });
+
+    let did_call = DidAuthorizedCallOperation {
+        did: did_address.to_owned(),
+        tx_counter,
+        call,
+        block_number,
+        submitter: submitter_signer.account_id().to_owned().into(),
+    };
+
+    let signature = calculate_signature(&did_call.encode(), submitter_signer);
+    let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
+    let events = chain_client
+        .tx()
+        .sign_and_submit_then_watch_default(&final_tx, submitter_signer)
+        .await?
+        .wait_for_finalized_success()
+        .await;
+
+    let update_event = events?.find_first::<runtime::did::events::DidUpdated>()?;
+
+    if let Some(_) = update_event {
+        log::info!("Service endpoint with service id: {:?} removed", service_id);
+        Ok(())
+    } else {
+        log::info!(
+            "Service endpoint with service id: {:?} could not be added. Update Event not found",
+            service_id
+        );
+        Err(subxt::Error::Other("Update Event not found".to_string()))
+    }
 }

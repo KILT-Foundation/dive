@@ -8,7 +8,9 @@ use crate::kilt::{
     error::{CredentialAPIError, DidError, TxError},
     runtime::{
         self, runtime_types,
+        runtime_types::bounded_collections::bounded_vec::BoundedVec,
         runtime_types::did::did_details::{DidDetails, DidEncryptionKey, DidPublicKey},
+        runtime_types::did::service_endpoints::DidEndpoint,
         storage,
     },
     KiltConfig,
@@ -94,6 +96,26 @@ pub async fn get_did_doc(
         .ok_or(CredentialAPIError::Did("DID not found"))?;
 
     Ok(details)
+}
+
+pub async fn get_did_service_endpoint(
+    did: &str,
+    service_endpoint_id: &str,
+    cli: &OnlineClient<KiltConfig>,
+) -> Result<Option<DidEndpoint>, CredentialAPIError> {
+    let id = BoundedVec(service_endpoint_id.into());
+    let did = subxt::utils::AccountId32::from_str(did.trim_start_matches("did:kilt:"))
+        .map_err(|_| CredentialAPIError::Did("Invalid DID"))?;
+    let service_endpoint_key = runtime::storage().did().service_endpoints(&did, id);
+
+    let did_endpoint = cli
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&service_endpoint_key)
+        .await?;
+
+    Ok(did_endpoint)
 }
 
 fn parse_key_uri(key_uri: &str) -> Result<(&str, sp_core::H256), CredentialAPIError> {
