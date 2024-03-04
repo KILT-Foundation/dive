@@ -28,23 +28,6 @@ async fn participate_to_use_case(
     let use_case_service_endpoint_id = &app_state.use_case_service_endpoint_id;
     let use_case_url = use_case_participation_message.use_case_url.clone();
 
-    let maybe_service_endpoint = get_did_service_endpoint(
-        &use_case_participation_message.use_case_did_url,
-        use_case_service_endpoint_id,
-        &app_state.chain_client,
-    )
-    .await?;
-
-    if maybe_service_endpoint.is_some() {
-        remove_service_endpoint(
-            use_case_service_endpoint_id,
-            submitter_signer,
-            did_auth_signer,
-            &app_state.chain_client,
-        )
-        .await?;
-    }
-
     let formatted_did = format!(
         "{}{}",
         DID_PREFIX,
@@ -53,9 +36,28 @@ async fn participate_to_use_case(
             .to_ss58check_with_version(ADDRESS_FORMAT.into())
     );
 
+    if use_case_participation_message.update_service_endpoint {
+        let maybe_service_endpoint = get_did_service_endpoint(
+            &formatted_did,
+            use_case_service_endpoint_id,
+            &app_state.chain_client,
+        )
+        .await?;
+
+        if maybe_service_endpoint.is_some() {
+            remove_service_endpoint(
+                use_case_service_endpoint_id,
+                submitter_signer,
+                did_auth_signer,
+                &app_state.chain_client,
+            )
+            .await?;
+        }
+    }
+
     // Concatenate did urls - use case did url + device did url
     let concatenated_url = format!(
-        "{}{}",
+        "{}/{}",
         use_case_participation_message.use_case_did_url, formatted_did
     );
 
@@ -69,17 +71,15 @@ async fn participate_to_use_case(
     )
     .await?;
 
-    if use_case_participation_message.notify_use_case {
-        post_use_case_participation(
-            &use_case_url,
-            &use_case_participation_message.use_case_did_url,
-        )
-        .await?;
-    }
+    post_use_case_participation(
+        &use_case_url,
+        &use_case_participation_message.use_case_did_url,
+    )
+    .await?;
 
     Ok(HttpResponse::Ok())
 }
 
 pub fn get_use_case_scope() -> Scope {
-    web::scope("/api/v1/use-case")
+    web::scope("/api/v1/use-case").service(participate_to_use_case)
 }

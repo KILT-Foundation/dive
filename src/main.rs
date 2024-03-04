@@ -47,7 +47,7 @@ use crate::{
 };
 
 const SERVICE_ENDPOINT_TYPE: &'static str = "KiltPublishedCredentialCollectionV1Type";
-const USE_CASE_SERVICE_ENDPOINT_ID: &'static str = "#dena";
+const USE_CASE_SERVICE_ENDPOINT_ID: &'static str = "dive";
 
 #[derive(Clone)]
 pub struct AppState {

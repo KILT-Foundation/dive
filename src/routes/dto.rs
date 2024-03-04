@@ -72,8 +72,9 @@ pub struct RequestAttestationMessageContent {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UseCaseParticipationMessage {
     pub use_case_did_url: String,
     pub use_case_url: String,
-    pub notify_use_case: bool,
+    pub update_service_endpoint: bool,
 }

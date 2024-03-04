@@ -1,3 +1,4 @@
+use hex::ToHex;
 use sp_core::H256;
 use std::str::FromStr;
 use subxt::{ext::sp_core::sr25519::Pair as Sr25519Pair, tx::TxPayload, utils::AccountId32};
@@ -7,6 +8,7 @@ use subxt::{
     OnlineClient,
 };
 
+use crate::http_client::hex_encode;
 use crate::kilt::{
     error::TxError,
     runtime::runtime_types,
@@ -223,10 +225,11 @@ pub async fn add_service_endpoint(
     chain_client: &OnlineClient<KiltConfig>,
 ) -> Result<(), subxt::Error> {
     let did_address: subxt::utils::AccountId32 = did_signer.account_id().to_owned().into();
+
     let service_endpoint = DidEndpoint {
-        id: BoundedVec(service_id.into()),
-        service_types: BoundedVec(vec![BoundedVec(service_type.into())]),
-        urls: BoundedVec(vec![BoundedVec(url.into())]),
+        id: BoundedVec(service_id.as_bytes().to_vec()),
+        service_types: BoundedVec(vec![BoundedVec(service_type.as_bytes().to_vec())]),
+        urls: BoundedVec(vec![BoundedVec(url.as_bytes().to_vec())]),
     };
 
     let tx_counter = get_next_tx_counter(&chain_client, &did_address).await?;
@@ -235,6 +238,10 @@ pub async fn add_service_endpoint(
     let call = RuntimeCall::Did(runtime_types::did::pallet::Call::add_service_endpoint {
         service_endpoint,
     });
+
+    let bla = call.encode();
+
+    let c = hex_encode(bla);
 
     let did_call = DidAuthorizedCallOperation {
         did: did_address.to_owned(),
@@ -246,12 +253,12 @@ pub async fn add_service_endpoint(
 
     let signature = calculate_signature(&did_call.encode(), did_signer);
     let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
-    let events = chain_client
+    let error = chain_client
         .tx()
         .sign_and_submit_then_watch_default(&final_tx, submitter_signer)
-        .await?
-        .wait_for_finalized_success()
         .await;
+
+    let events = error?.wait_for_finalized_success().await;
 
     let update_event = events?.find_first::<runtime::did::events::DidUpdated>()?;
 

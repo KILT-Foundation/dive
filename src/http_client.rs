@@ -21,17 +21,25 @@ use crate::{
     },
 };
 
-fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
+pub fn hex_encode<T: AsRef<[u8]>>(data: T) -> String {
     format!("0x{}", hex::encode(data.as_ref()))
 }
 
 fn is_jwt_token_not_expired(jwt_token: &str) -> bool {
     let parts: Vec<&str> = jwt_token.split('.').collect();
-    let Some(header_option) = parts.get(1) else { return false };
-    let Ok(decoded_header)  = general_purpose::STANDARD.decode(header_option) else { return false };
-    let Ok(jwt_header) = serde_json::from_slice::<serde_json::Value>(&decoded_header) else { return false };
+    let Some(header_option) = parts.get(1) else {
+        return false;
+    };
+    let Ok(decoded_header) = general_purpose::STANDARD.decode(header_option) else {
+        return false;
+    };
+    let Ok(jwt_header) = serde_json::from_slice::<serde_json::Value>(&decoded_header) else {
+        return false;
+    };
 
-    let Ok(expired) = serde_json::from_value::<i64>(jwt_header["exp"].clone()) else { return false };
+    let Ok(expired) = serde_json::from_value::<i64>(jwt_header["exp"].clone()) else {
+        return false;
+    };
     let now = chrono::Utc::now().timestamp();
     expired > now
 }
