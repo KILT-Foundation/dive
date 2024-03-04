@@ -74,5 +74,6 @@ pub struct RequestAttestationMessageContent {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UseCaseParticipationMessage {
     pub use_case_did_url: String,
+    pub use_case_url: String,
     pub notify_use_case: bool,
 }

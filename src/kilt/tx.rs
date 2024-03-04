@@ -215,13 +215,14 @@ pub async fn create_did(
 }
 
 pub async fn add_service_endpoint(
-    did_address: &AccountId32,
     url: &str,
     service_id: &str,
     service_type: &str,
     submitter_signer: &PairSigner<KiltConfig, Pair>,
+    did_signer: &PairSigner<KiltConfig, Pair>,
     chain_client: &OnlineClient<KiltConfig>,
 ) -> Result<(), subxt::Error> {
+    let did_address: subxt::utils::AccountId32 = did_signer.account_id().to_owned().into();
     let service_endpoint = DidEndpoint {
         id: BoundedVec(service_id.into()),
         service_types: BoundedVec(vec![BoundedVec(service_type.into())]),
@@ -243,7 +244,7 @@ pub async fn add_service_endpoint(
         submitter: submitter_signer.account_id().to_owned().into(),
     };
 
-    let signature = calculate_signature(&did_call.encode(), submitter_signer);
+    let signature = calculate_signature(&did_call.encode(), did_signer);
     let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
     let events = chain_client
         .tx()
@@ -267,11 +268,12 @@ pub async fn add_service_endpoint(
 }
 
 pub async fn remove_service_endpoint(
-    did_address: &AccountId32,
     service_id: &str,
     submitter_signer: &PairSigner<KiltConfig, Pair>,
+    did_signer: &PairSigner<KiltConfig, Pair>,
     chain_client: &OnlineClient<KiltConfig>,
 ) -> Result<(), subxt::Error> {
+    let did_address: subxt::utils::AccountId32 = did_signer.account_id().to_owned().into();
     let tx_counter = get_next_tx_counter(&chain_client, &did_address).await?;
     let block_number = get_current_block(&chain_client).await?;
 
@@ -287,7 +289,7 @@ pub async fn remove_service_endpoint(
         submitter: submitter_signer.account_id().to_owned().into(),
     };
 
-    let signature = calculate_signature(&did_call.encode(), submitter_signer);
+    let signature = calculate_signature(&did_call.encode(), did_signer);
     let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
     let events = chain_client
         .tx()

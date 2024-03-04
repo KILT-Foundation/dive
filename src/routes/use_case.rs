@@ -25,10 +25,8 @@ async fn participate_to_use_case(
         use_case_participation_message.use_case_did_url
     );
 
-    // TODO: add these to app_state
-    let use_case_service_endpoint_id = "#dena";
-    let service_type = "KiltPublishedCredentialCollectionV1Type";
-    let use_case_url = "http://localhost:8000";
+    let use_case_service_endpoint_id = &app_state.use_case_service_endpoint_id;
+    let use_case_url = use_case_participation_message.use_case_url.clone();
 
     let maybe_service_endpoint = get_did_service_endpoint(
         &use_case_participation_message.use_case_did_url,
@@ -37,24 +35,23 @@ async fn participate_to_use_case(
     )
     .await?;
 
-    let did = did_auth_signer
-        .account_id()
-        .to_ss58check_with_version(ADDRESS_FORMAT.into());
+    if maybe_service_endpoint.is_some() {
+        remove_service_endpoint(
+            use_case_service_endpoint_id,
+            submitter_signer,
+            did_auth_signer,
+            &app_state.chain_client,
+        )
+        .await?;
+    }
 
-    match maybe_service_endpoint {
-        None => {
-            let _extrinsic_hash = remove_service_endpoint(
-                &app_state.did_attester,
-                use_case_service_endpoint_id,
-                submitter_signer,
-                &app_state.chain_client,
-            )
-            .await?;
-        }
-        Some(_) => {}
-    };
-
-    let formatted_did = format!("{}{}", DID_PREFIX, did);
+    let formatted_did = format!(
+        "{}{}",
+        DID_PREFIX,
+        did_auth_signer
+            .account_id()
+            .to_ss58check_with_version(ADDRESS_FORMAT.into())
+    );
 
     // Concatenate did urls - use case did url + device did url
     let concatenated_url = format!(
@@ -63,18 +60,18 @@ async fn participate_to_use_case(
     );
 
     add_service_endpoint(
-        &app_state.did_attester,
         &concatenated_url,
         use_case_service_endpoint_id,
-        service_type,
+        &app_state.kilt_service_endpoint_type,
         submitter_signer,
+        did_auth_signer,
         &app_state.chain_client,
     )
     .await?;
 
     if use_case_participation_message.notify_use_case {
         post_use_case_participation(
-            use_case_url,
+            &use_case_url,
             &use_case_participation_message.use_case_did_url,
         )
         .await?;
