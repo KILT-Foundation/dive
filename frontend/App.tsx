@@ -6,6 +6,7 @@ import { getExistingDid, getPaymentAddress, API_URL } from "./api/backend";
 import Footer from "./ui_components/FooterSection";
 import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
+import UseCaseComponent from "./ui_components/UseCaseSection";
 
 export function App() {
   const [boxDidPending, setBoxDidPending] = useState(false);
@@ -129,6 +130,8 @@ export function App() {
         ownerDIDs={ownerDIDs}
         handleCreateOwnerDIDClick={handleCreateOwnerDIDClick}
         handleGetOwnerDIDsClick={handleGetOwnerDIDsClick}
+      />
+      <UseCaseComponent
       />
       <Footer />
     </>
