@@ -77,4 +77,5 @@ pub struct UseCaseParticipationMessage {
     pub use_case_did_url: String,
     pub use_case_url: String,
     pub update_service_endpoint: bool,
+    pub notify_use_case: bool,
 }

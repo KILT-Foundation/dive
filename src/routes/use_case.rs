@@ -1,12 +1,16 @@
-use actix_web::{post, web, HttpResponse, Responder, Scope};
+use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 use subxt::ext::sp_core::crypto::Ss58Codec;
 
 use crate::{
     device::key_manager::KeyManager,
+    dto::UseCaseResponse,
     error::ServerError,
     http_client::post_use_case_participation,
-    kilt::did_helper::{get_did_service_endpoint, ADDRESS_FORMAT, DID_PREFIX},
-    kilt::tx::{add_service_endpoint, remove_service_endpoint},
+    kilt::{
+        did_helper::{get_did_service_endpoint, ADDRESS_FORMAT, DID_PREFIX},
+        error::UseCaseAPIError,
+        tx::{add_service_endpoint, remove_service_endpoint},
+    },
     routes::dto::*,
     AppState,
 };
@@ -36,6 +40,12 @@ async fn participate_to_use_case(
             .to_ss58check_with_version(ADDRESS_FORMAT.into())
     );
 
+    // Concatenate did urls - use case did url + device did url
+    let concatenated_url = format!(
+        "{}/{}",
+        use_case_participation_message.use_case_did_url, formatted_did
+    );
+
     if use_case_participation_message.update_service_endpoint {
         let maybe_service_endpoint = get_did_service_endpoint(
             &formatted_did,
@@ -53,29 +63,66 @@ async fn participate_to_use_case(
             )
             .await?;
         }
+
+        add_service_endpoint(
+            &concatenated_url,
+            use_case_service_endpoint_id,
+            &app_state.kilt_service_endpoint_type,
+            submitter_signer,
+            did_auth_signer,
+            &app_state.chain_client,
+        )
+        .await?;
     }
 
-    // Concatenate did urls - use case did url + device did url
-    let concatenated_url = format!(
-        "{}/{}",
-        use_case_participation_message.use_case_did_url, formatted_did
-    );
-
-    add_service_endpoint(
-        &concatenated_url,
-        use_case_service_endpoint_id,
-        &app_state.kilt_service_endpoint_type,
-        submitter_signer,
-        did_auth_signer,
-        &app_state.chain_client,
-    )
-    .await?;
-
-    post_use_case_participation(&use_case_url, &formatted_did).await?;
+    if use_case_participation_message.notify_use_case {
+        post_use_case_participation(&use_case_url, &formatted_did).await?;
+    }
 
     Ok(HttpResponse::Ok())
 }
 
+#[get("")]
+async fn get_use_case(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
+    let keys = app_state.key_manager.lock().await;
+    let did_auth_signer = &keys.get_did_auth_signer();
+
+    let formatted_did = format!(
+        "{}{}",
+        DID_PREFIX,
+        did_auth_signer
+            .account_id()
+            .to_ss58check_with_version(ADDRESS_FORMAT.into())
+    );
+
+    let use_case_service_endpoint_id = &app_state.use_case_service_endpoint_id;
+
+    let maybe_service_endpoint = get_did_service_endpoint(
+        &formatted_did,
+        use_case_service_endpoint_id,
+        &app_state.chain_client,
+    )
+    .await?;
+
+    match maybe_service_endpoint {
+        Some(service_endpoint) => {
+            println!("{:#?}", service_endpoint.urls);
+            let inner = service_endpoint.urls.0;
+            let url = &inner[0];
+
+            Ok(HttpResponse::Ok().json(UseCaseResponse {
+                use_case: "".to_string(),
+            }))
+        }
+        // Some(service_endpoint) => Ok(HttpResponse::Ok()),
+        None => Err(ServerError::UseCaseAPI(UseCaseAPIError::NotFound(
+            "Use case not found".to_string(),
+        ))),
+    }
+}
+
 pub fn get_use_case_scope() -> Scope {
-    web::scope("/api/v1/use-case").service(participate_to_use_case)
+    web::scope("/api/v1/use-case")
+        .service(participate_to_use_case)
+        .service(get_use_case)
 }
