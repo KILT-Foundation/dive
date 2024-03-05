@@ -90,10 +90,10 @@ export async function postClaim(claim: ICredential) {
     }
 }
 
-export async function postUseCaseParticipation(useCaseDidUrl: string, useCaseUrl: string, updateServiceEndpoint: boolean) {
+export async function postUseCaseParticipation(useCaseDidUrl: string, useCaseUrl: string, updateServiceEndpoint: boolean, notifyUseCase: boolean) {
     try {
         const response = await ky.post(`${API_URL}/use-case`, {
-            json: { useCaseDidUrl, useCaseUrl, updateServiceEndpoint },
+            json: { useCaseDidUrl, useCaseUrl, updateServiceEndpoint, notifyUseCase },
         });
     } catch (exception) {
         console.error(exception);

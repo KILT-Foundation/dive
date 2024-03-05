@@ -47,7 +47,6 @@ function UseCaseComponent() {
   );
 
   const handleSubmitUseCaseSelection = useCallback(() => {
-    console.log("i am here", option);
     if (option === undefined) {
       return;
     }
@@ -63,26 +62,15 @@ function UseCaseComponent() {
 
     const { did, url } = useCase;
 
-    postUseCaseParticipation(did, url, true);
+    postUseCaseParticipation(did, url, true, true);
   }, [option]);
 
-  const handleSubmitUseCaseSelectionNotifyFalse = useCallback(() => {
-    if (option === undefined) {
-      return;
-    }
+  const handleSubmitUseCaseSelectionInvalidValue = useCallback(() => {
+    postUseCaseParticipation("invalid", "http://localhost:8000", true, true);
+  }, [option]);
 
-    const selectedUseCase = useCases.filter((a) => a.did === option);
-
-    if (selectedUseCase.length === 0) {
-      console.error("Selected not existing use case");
-      return;
-    }
-
-    const useCase = selectedUseCase[0];
-
-    const { did, url } = useCase;
-
-    postUseCaseParticipation(did, url, false);
+  const handleSubmitUseCaseDeregistration = useCallback(() => {
+    postUseCaseParticipation("deregistration", "", true, false);
   }, [option]);
 
   return (
@@ -92,7 +80,9 @@ function UseCaseComponent() {
         <legend>Aktueller Use Case</legend>
         <p>Die Anlage ist aktuell angemeldet für: Energy Web Green Proofs</p>
         {/* invalidates the DIVE conflict token, e.g. empty string */}
-        <button type="submit">Abmelden</button>
+        <button type="submit" onClick={handleSubmitUseCaseDeregistration}>
+          Abmelden
+        </button>
       </fieldset>
       <fieldset>
         <legend>Wechsel oder erstmalige Anmeldung an einem Use Case</legend>
@@ -141,7 +131,7 @@ function UseCaseComponent() {
         {/* calls the user case api to register the device for participation without updating the DIVE conflict token (for demo purpose; will lead to an error) */}
         <button
           type="submit"
-          onClick={handleSubmitUseCaseSelectionNotifyFalse}
+          onClick={handleSubmitUseCaseSelectionInvalidValue}
           title="Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird fehlschlagen. Die Anlage wird folglich nicht tatsächlich beim Use Case angemeldet."
         >
           Anmelden (ohne Abmeldung)
