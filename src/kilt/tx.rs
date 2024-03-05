@@ -1,4 +1,3 @@
-use hex::ToHex;
 use sp_core::H256;
 use std::str::FromStr;
 use subxt::{ext::sp_core::sr25519::Pair as Sr25519Pair, tx::TxPayload, utils::AccountId32};
@@ -8,7 +7,6 @@ use subxt::{
     OnlineClient,
 };
 
-use crate::http_client::hex_encode;
 use crate::kilt::{
     error::TxError,
     runtime::runtime_types,
@@ -238,10 +236,6 @@ pub async fn add_service_endpoint(
     let call = RuntimeCall::Did(runtime_types::did::pallet::Call::add_service_endpoint {
         service_endpoint,
     });
-
-    let bla = call.encode();
-
-    let c = hex_encode(bla);
 
     let did_call = DidAuthorizedCallOperation {
         did: did_address.to_owned(),

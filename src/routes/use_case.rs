@@ -71,11 +71,7 @@ async fn participate_to_use_case(
     )
     .await?;
 
-    post_use_case_participation(
-        &use_case_url,
-        &use_case_participation_message.use_case_did_url,
-    )
-    .await?;
+    post_use_case_participation(&use_case_url, &formatted_did).await?;
 
     Ok(HttpResponse::Ok())
 }
