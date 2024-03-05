@@ -14,3 +14,7 @@ export interface AttestationResponse {
     claimer: string;
     tx_state: number | null;
 }
+
+export interface UseCaseResponse {
+    useCase: string;
+}

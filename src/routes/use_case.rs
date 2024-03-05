@@ -106,15 +106,24 @@ async fn get_use_case(app_state: web::Data<AppState>) -> Result<impl Responder, 
 
     match maybe_service_endpoint {
         Some(service_endpoint) => {
-            println!("{:#?}", service_endpoint.urls);
-            let inner = service_endpoint.urls.0;
-            let url = &inner[0];
-
-            Ok(HttpResponse::Ok().json(UseCaseResponse {
-                use_case: "".to_string(),
-            }))
+            let maybe_url = String::from_utf8(service_endpoint.urls.0[0].0.clone());
+            match maybe_url {
+                Ok(url) => {
+                    let maybe_use_case = url.split("/").next();
+                    match maybe_use_case {
+                        Some(use_case) => Ok(HttpResponse::Ok().json(UseCaseResponse {
+                            use_case: use_case.to_string(),
+                        })),
+                        None => Err(ServerError::UseCaseAPI(UseCaseAPIError::NotFound(
+                            "Use case decoding error".to_string(),
+                        ))),
+                    }
+                }
+                Err(_) => Err(ServerError::UseCaseAPI(UseCaseAPIError::NotFound(
+                    "Use case decoding error".to_string(),
+                ))),
+            }
         }
-        // Some(service_endpoint) => Ok(HttpResponse::Ok()),
         None => Err(ServerError::UseCaseAPI(UseCaseAPIError::NotFound(
             "Use case not found".to_string(),
         ))),

@@ -6,7 +6,7 @@ import type {
     ICredential,
     IClaim,
 } from "@kiltprotocol/types";
-import { AttestationResponse } from "../types";
+import { AttestationResponse, UseCaseResponse } from "../types";
 
 export const API_URL = "http://localhost:3333/api/v1";
 
@@ -99,4 +99,20 @@ export async function postUseCaseParticipation(useCaseDidUrl: string, useCaseUrl
         console.error(exception);
         throw exception;
     }
-} 
+}
+
+
+export async function getActiveUseCase() {
+  try {
+    const response = await ky.get(`${API_URL}/use-case`, { timeout: false });
+    const data = await response.json<UseCaseResponse>();
+
+    return data.useCase;
+  } catch (exception) {
+    if ((exception as HTTPError).response.status === 404) {
+      return undefined;
+    }
+    console.error(exception);
+    throw exception;
+  }
+}

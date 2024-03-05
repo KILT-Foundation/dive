@@ -6,10 +6,13 @@ import {
   useEffect,
   useState,
 } from "react";
-import { postUseCaseParticipation } from "../api/backend";
+import { getActiveUseCase, postUseCaseParticipation } from "../api/backend";
 
 function UseCaseComponent() {
   const [option, setOption] = useState<string>();
+  const [activeUseCase, setActiveUseCase] = useState<string>();
+  const [error, setError] = useState("");
+
   const useCases = [
     {
       name: "Energy Web Green Proofs",
@@ -73,12 +76,23 @@ function UseCaseComponent() {
     postUseCaseParticipation("deregistration", "", true, false);
   }, [option]);
 
+  useEffect(() => {
+    getActiveUseCase()
+      .then((useCaseDidUrl) => {
+        const useCase = useCases.find((a) => a.did === useCaseDidUrl);
+        const activeUseCase = useCase ? useCase.name : "None";
+        setActiveUseCase(activeUseCase);
+      })
+      .catch((e) => setError(error + "\n" + e.toString()));
+  }, []);
+
   return (
     <section className="box">
       <h3>Use Case</h3>
+      {error !== "" && error}
       <fieldset>
         <legend>Aktueller Use Case</legend>
-        <p>Die Anlage ist aktuell angemeldet für: Energy Web Green Proofs</p>
+        <p>Die Anlage ist aktuell angemeldet für: {activeUseCase}</p>
         {/* invalidates the DIVE conflict token, e.g. empty string */}
         <button type="submit" onClick={handleSubmitUseCaseDeregistration}>
           Abmelden
