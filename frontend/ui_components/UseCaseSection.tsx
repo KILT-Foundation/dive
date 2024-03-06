@@ -69,7 +69,7 @@ function UseCaseComponent() {
   }, [option]);
 
   const handleSubmitUseCaseSelectionInvalidValue = useCallback(() => {
-    postUseCaseParticipation("invalid", "http://localhost:8000", true, true);
+    postUseCaseParticipation("invalid", "http://localhost:8000", false, true);
   }, [option]);
 
   const handleSubmitUseCaseDeregistration = useCallback(() => {
