@@ -266,6 +266,7 @@ pub async fn get_credentials_from_attester(
 pub async fn post_use_case_participation(
     use_case_url: &str,
     did_url: &str,
+    presentation: Credential,
 ) -> Result<(), ServerError> {
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(CONTENT_TYPE, "application/json".parse()?);
@@ -278,6 +279,7 @@ pub async fn post_use_case_participation(
 
     let registration_body = UseCaseRegistrationBody {
         did_url: did_url.to_string(),
+        presentation,
     };
 
     let response = client.post(url).json(&registration_body).send().await?;

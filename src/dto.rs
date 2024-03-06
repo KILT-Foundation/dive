@@ -55,6 +55,7 @@ pub struct PayerAddress {
 #[serde(rename_all = "camelCase")]
 pub struct UseCaseRegistrationBody {
     pub did_url: String,
+    pub presentation: Credential,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]

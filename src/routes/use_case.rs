@@ -2,7 +2,7 @@ use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 use subxt::ext::sp_core::crypto::Ss58Codec;
 
 use crate::{
-    device::key_manager::KeyManager,
+    device::{file_manager::get_claim_content, key_manager::KeyManager},
     dto::UseCaseResponse,
     error::ServerError,
     http_client::post_use_case_participation,
@@ -75,8 +75,9 @@ async fn participate_to_use_case(
         .await?;
     }
 
+    let credential = get_claim_content()?;
     if use_case_participation_message.notify_use_case {
-        post_use_case_participation(&use_case_url, &formatted_did).await?;
+        post_use_case_participation(&use_case_url, &formatted_did, credential).await?;
     }
 
     Ok(HttpResponse::Ok())
