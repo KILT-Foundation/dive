@@ -110,6 +110,7 @@ impl ResponseError for UseCaseAPIError {
     fn status_code(&self) -> StatusCode {
         match self {
             UseCaseAPIError::NotFound(_) => StatusCode::NOT_FOUND,
+            UseCaseAPIError::Format(_) => StatusCode::BAD_REQUEST,
         }
     }
 }
