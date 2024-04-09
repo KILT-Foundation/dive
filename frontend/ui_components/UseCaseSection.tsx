@@ -12,6 +12,9 @@ function UseCaseComponent() {
   const [option, setOption] = useState<string>();
   const [activeUseCase, setActiveUseCase] = useState<string>();
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [isDeregister, setIsDeregister] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const useCases = [
     {
@@ -49,7 +52,7 @@ function UseCaseComponent() {
     []
   );
 
-  const handleSubmitUseCaseSelection = useCallback(() => {
+  const handleSubmitUseCaseSelection = useCallback(async () => {
     if (option === undefined) {
       return;
     }
@@ -57,7 +60,7 @@ function UseCaseComponent() {
     const selectedUseCase = useCases.filter((a) => a.did === option);
 
     if (selectedUseCase.length === 0) {
-      console.error("Selected not existing use case");
+      console.error("Selected use case does not exists");
       return;
     }
 
@@ -65,15 +68,47 @@ function UseCaseComponent() {
 
     const { did, url } = useCase;
 
-    postUseCaseParticipation(did, url, true, true);
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress((old) => old + 1);
+    }, 1000);
+    setIsSignUp(true);
+
+    await postUseCaseParticipation(did, url, true, true);
+
+    setIsSignUp(false);
+    clearInterval(interval);
   }, [option]);
 
-  const handleSubmitUseCaseSelectionInvalidValue = useCallback(() => {
-    postUseCaseParticipation("invalid", "http://localhost:8000", false, true);
+  const handleSubmitUseCaseSelectionInvalidValue = useCallback(async () => {
+    setProgress(0);
+    setIsSignUp(true);
+    const interval = setInterval(() => {
+      setProgress((old) => old + 1);
+    }, 1000);
+
+    await postUseCaseParticipation(
+      "invalid",
+      "http://localhost:8000",
+      false,
+      true
+    );
+
+    setIsSignUp(false);
+    clearInterval(interval);
   }, [option]);
 
-  const handleSubmitUseCaseDeregistration = useCallback(() => {
-    postUseCaseParticipation("deregistration", "", true, false);
+  const handleSubmitUseCaseDeregistration = useCallback(async () => {
+    setProgress(0);
+    setIsDeregister(true);
+    const interval = setInterval(() => {
+      setProgress((old) => old + 1);
+    }, 1000);
+
+    await postUseCaseParticipation("deregistration", "", true, false);
+
+    clearInterval(interval);
+    setIsDeregister(false);
   }, [option]);
 
   useEffect(() => {
@@ -86,6 +121,8 @@ function UseCaseComponent() {
       .catch((e) => setError(error + "\n" + e.toString()));
   }, []);
 
+  const isServerBlocked = isDeregister || isSignUp;
+
   return (
     <section className="box">
       <h3>Use Case</h3>
@@ -94,9 +131,15 @@ function UseCaseComponent() {
         <legend>Aktueller Use Case</legend>
         <p>Die Anlage ist aktuell angemeldet für: {activeUseCase}</p>
         {/* invalidates the DIVE conflict token, e.g. empty string */}
-        <button type="submit" onClick={handleSubmitUseCaseDeregistration}>
+        <button
+          disabled={isServerBlocked}
+          type="submit"
+          onClick={handleSubmitUseCaseDeregistration}
+        >
           Abmelden
         </button>
+
+        {isDeregister && <progress max={60} value={progress} />}
       </fieldset>
       <fieldset>
         <legend>Wechsel oder erstmalige Anmeldung an einem Use Case</legend>
@@ -131,11 +174,13 @@ function UseCaseComponent() {
             then calls the use case api to register the device for participation */}
         <button
           type="submit"
+          disabled={isServerBlocked}
           onClick={handleSubmitUseCaseSelection}
           title="Bei der regulären Anmeldung wird der 'Konflikt-Token' vor der Anmeldung aktualisiert. Dies entspricht einer Abmeldung beim vorherigen Use Case und vermeidet daher mehrere, glechzeitige Use Case Teilnahmen."
         >
-          Anmelden (Regulär mit Abmeldung)
+          Anmelden (Regulär mit Abmeldung){" "}
         </button>
+        {isSignUp && <progress max={60} value={progress} />}
         <p>
           Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der
           Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird
@@ -145,11 +190,13 @@ function UseCaseComponent() {
         {/* calls the user case api to register the device for participation without updating the DIVE conflict token (for demo purpose; will lead to an error) */}
         <button
           type="submit"
+          disabled={isServerBlocked}
           onClick={handleSubmitUseCaseSelectionInvalidValue}
           title="Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird fehlschlagen. Die Anlage wird folglich nicht tatsächlich beim Use Case angemeldet."
         >
           Anmelden (ohne Abmeldung)
         </button>
+        {isSignUp && <progress max={60} value={progress} />}
       </fieldset>
       <fieldset>
         <legend>Bekanntmachen</legend>
