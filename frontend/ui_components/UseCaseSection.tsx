@@ -107,14 +107,14 @@ function UseCaseComponent() {
       setProgress((old) => old + 1);
     }, 1000);
 
-    const config: UseCaseConfig = {
+    const deregisterConfig: UseCaseConfig = {
       notifyUseCase: false,
       updateServiceEndpoint: true,
       useCaseDidUrl: "deregistration",
       useCaseUrl: "",
     };
 
-    await postUseCaseParticipation(config);
+    await postUseCaseParticipation(deregisterConfig);
 
     clearInterval(interval);
     setIsDeregister(false);
