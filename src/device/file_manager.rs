@@ -7,7 +7,10 @@ use super::{
     error::DeviceError,
     key_manager::{KeyManager, PairKeyManager},
 };
-use crate::{dto::Credential, kilt::did_helper::ADDRESS_FORMAT};
+use crate::{
+    dto::Credential,
+    kilt::did_helper::{ADDRESS_FORMAT, DID_PREFIX},
+};
 
 const KEY_FILE_PATH: &str = "./keys.json";
 const BASE_CLAIM_PATH: &str = "./base_claim.json";
@@ -54,10 +57,12 @@ fn generate_key_file_struct() -> Result<KeysFileStructure, DeviceError> {
     let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
 
     let manager = PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
-    let did = manager
+    let raw_did = manager
         .get_did_auth_signer()
         .account_id()
         .to_ss58check_with_version(ADDRESS_FORMAT.into());
+
+    let did = format!("{}{}", DID_PREFIX, raw_did);
 
     Ok(KeysFileStructure {
         payment_account_seed: payment_mnemonic.to_string(),
@@ -84,10 +89,13 @@ pub fn reset_did_keys() -> Result<PairKeyManager, DeviceError> {
         let manager =
             PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
 
-        let did = manager
+        let raw_did = manager
             .get_did_auth_signer()
             .account_id()
             .to_ss58check_with_version(ADDRESS_FORMAT.into());
+
+        let did = format!("{}{}", DID_PREFIX, raw_did);
+
         keys_file.did = did;
         save_key_file(&keys_file)?;
 
