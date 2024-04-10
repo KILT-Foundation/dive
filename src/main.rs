@@ -80,7 +80,7 @@ pub struct AppState {
     pub did_attester: AccountId32,
     /// Type for service Endpoint
     pub kilt_service_endpoint_type: String,
-    ///
+    ///Service Endpoint ID for use case participation
     pub use_case_service_endpoint_id: String,
 }
 
