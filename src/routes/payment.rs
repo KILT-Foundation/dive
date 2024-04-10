@@ -34,7 +34,7 @@ async fn submit_extrinsic(
     let call = hex::decode(trimmed_call)
         .map_err(|e| ServerError::Tx(TxError::Format(FormatError::Hex(e))))?;
 
-    let tx = submit_call(chain_client, &signer, &call, WaitFor::Finalized).await?;
+    let tx = submit_call(chain_client, &signer, call, WaitFor::Finalized).await?;
 
     log::info!("Tx hash: {}", tx);
     Ok(HttpResponse::Ok())
