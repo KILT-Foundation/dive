@@ -1,13 +1,12 @@
 use std::{fs, io, path::Path, str::FromStr};
-
 use subxt::ext::sp_core::crypto::Ss58Codec;
 
-use super::{
-    crypto::get_random_bytes,
-    error::DeviceError,
-    key_manager::{KeyManager, PairKeyManager},
-};
 use crate::{
+    device::{
+        crypto::get_random_bytes,
+        error::DeviceError,
+        key_manager::{KeyManager, PairKeyManager},
+    },
     dto::Credential,
     kilt::did_helper::{ADDRESS_FORMAT, DID_PREFIX},
 };
