@@ -100,13 +100,9 @@ async fn get_use_case(app_state: web::Data<AppState>) -> Result<impl Responder, 
                     }));
                 }
             }
-            return Err(ServerError::UseCaseAPI(UseCaseAPIError::Format(
-                "Use case decoding error".to_string(),
-            )));
+            return Err(ServerError::UseCaseAPI(UseCaseAPIError::Format));
         }
-        None => Err(ServerError::UseCaseAPI(UseCaseAPIError::NotFound(
-            "Use case not found".to_string(),
-        ))),
+        None => Err(ServerError::UseCaseAPI(UseCaseAPIError::NotFound)),
     }
 }
 

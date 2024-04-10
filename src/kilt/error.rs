@@ -46,8 +46,8 @@ pub enum CredentialAPIError {
 
 #[derive(thiserror::Error, Debug)]
 pub enum UseCaseAPIError {
-    #[error("Use case not found: {0}")]
-    NotFound(String),
-    #[error("Format Error: {0}")]
-    Format(String),
+    #[error("Use case not found")]
+    NotFound,
+    #[error("Format Error")]
+    Format,
 }
