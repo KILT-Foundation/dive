@@ -1,7 +1,13 @@
 use std::{fs, io, path::Path, str::FromStr};
 
-use super::{crypto::get_random_bytes, error::DeviceError, key_manager::PairKeyManager};
-use crate::dto::Credential;
+use subxt::ext::sp_core::crypto::Ss58Codec;
+
+use super::{
+    crypto::get_random_bytes,
+    error::DeviceError,
+    key_manager::{KeyManager, PairKeyManager},
+};
+use crate::{dto::Credential, kilt::did_helper::ADDRESS_FORMAT};
 
 const KEY_FILE_PATH: &str = "./keys.json";
 const BASE_CLAIM_PATH: &str = "./base_claim.json";
@@ -11,6 +17,7 @@ const BASE_CLAIM_PATH: &str = "./base_claim.json";
 pub(crate) struct KeysFileStructure {
     pub payment_account_seed: String,
     pub did_auth_seed: String,
+    pub did: String,
 }
 
 /// Save the key file to the specified path.
@@ -46,9 +53,16 @@ fn generate_key_file_struct() -> Result<KeysFileStructure, DeviceError> {
     let payment_mnemonic = bip39::Mnemonic::from_entropy(&payment_random_seed)?;
     let auth_mnemonic = bip39::Mnemonic::from_entropy(&auth_random_seed)?;
 
+    let manager = PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
+    let did = manager
+        .get_did_auth_signer()
+        .account_id()
+        .to_ss58check_with_version(ADDRESS_FORMAT.into());
+
     Ok(KeysFileStructure {
         payment_account_seed: payment_mnemonic.to_string(),
         did_auth_seed: auth_mnemonic.to_string(),
+        did,
     })
 }
 
@@ -63,13 +77,20 @@ pub fn reset_did_keys() -> Result<PairKeyManager, DeviceError> {
         let mut keys_file: KeysFileStructure =
             serde_json::from_str(&fs::read_to_string(KEY_FILE_PATH)?)?;
         keys_file.did_auth_seed = auth_mnemonic.to_string();
-        save_key_file(&keys_file)?;
 
         // Initialize and return the new PairKeyManager
         let payment_mnemonic = bip39::Mnemonic::from_str(&keys_file.payment_account_seed)?;
         let auth_mnemonic = bip39::Mnemonic::from_str(&keys_file.did_auth_seed)?;
         let manager =
             PairKeyManager::new(&payment_mnemonic.to_string(), &auth_mnemonic.to_string())?;
+
+        let did = manager
+            .get_did_auth_signer()
+            .account_id()
+            .to_ss58check_with_version(ADDRESS_FORMAT.into());
+        keys_file.did = did;
+        save_key_file(&keys_file)?;
+
         Ok(manager)
     } else {
         // Return an error if the key file is not found
