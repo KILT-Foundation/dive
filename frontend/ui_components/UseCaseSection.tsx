@@ -2,41 +2,77 @@ import { SetStateAction, useCallback, useEffect, useState } from "react";
 import { getActiveUseCase, postUseCaseParticipation } from "../api/backend";
 import { UseCaseConfig } from "../types";
 
+const RawUseCases = [
+  {
+    name: "Energy Web Green Proofs",
+    did: "did:web:dive-greenproofs.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Track & Trace (via Energy Web)",
+    did: "did:web:dive-ett-proxy.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Energy Web Flex",
+    did: "did:web:dive-flex.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Energy Web Green Proofs",
+    did: "did:web:dive-ev-supplier-switch.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Example",
+    did: "did:web:example.com",
+    url: "http://localhost:8000",
+  },
+];
+
 function UseCaseComponent() {
+  // states
   const [option, setOption] = useState<string>();
   const [activeUseCase, setActiveUseCase] = useState<string>();
   const [error, setError] = useState("");
+  const [customUseCase, setCustomUseCase] = useState<string>("");
   const [progress, setProgress] = useState(0);
   const [isDeregister, setIsDeregister] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUpValid, setIsSignUpValid] = useState(false);
+  const [isSignUpInvalid, setIsSignUpInvalid] = useState(false);
+  const [useCases, setUseCases] = useState(RawUseCases);
 
-  const useCases = [
-    {
-      name: "Energy Web Green Proofs",
-      did: "did:web:dive-greenproofs.energywebx.com",
+  // helper functions
+
+  const updateActiveUserCase = (useCaseDidUrl: string) => {
+    const useCase = useCases.find((a) => a.did === useCaseDidUrl);
+    const activeUseCase = useCase ? useCase.name : "None";
+    setActiveUseCase(activeUseCase);
+  };
+
+  // side effects
+
+  useEffect(() => {
+    getActiveUseCase()
+      .then((useCaseDidUrl) => {
+        updateActiveUserCase(useCaseDidUrl);
+      })
+      .catch((e) => setError(error + "\n" + e.toString()));
+  }, []);
+
+  // callbacks
+
+  const handleAddUseCase = useCallback(() => {
+    const upd = [...useCases];
+    upd.push({
+      did: customUseCase,
+      name: customUseCase,
       url: "http://localhost:8000",
-    },
-    {
-      name: "Track & Trace (via Energy Web)",
-      did: "did:web:dive-ett-proxy.energywebx.com",
-      url: "http://localhost:8000",
-    },
-    {
-      name: "Energy Web Flex",
-      did: "did:web:dive-flex.energywebx.com",
-      url: "http://localhost:8000",
-    },
-    {
-      name: "Energy Web Green Proofs",
-      did: "did:web:dive-ev-supplier-switch.energywebx.com",
-      url: "http://localhost:8000",
-    },
-    {
-      name: "Example",
-      did: "did:web:example.com",
-      url: "http://localhost:8000",
-    },
-  ];
+    });
+
+    setUseCases(upd);
+    setCustomUseCase("");
+  }, [customUseCase]);
 
   const handleChange = useCallback(
     (e: { target: { value: SetStateAction<string> } }) => {
@@ -65,7 +101,7 @@ function UseCaseComponent() {
     const interval = setInterval(() => {
       setProgress((old) => old + 1);
     }, 1000);
-    setIsSignUp(true);
+    setIsSignUpValid(true);
 
     const config: UseCaseConfig = {
       notifyUseCase: true,
@@ -74,15 +110,16 @@ function UseCaseComponent() {
       useCaseUrl: url,
     };
 
-    await postUseCaseParticipation(config);
+    const activeUseCase = await postUseCaseParticipation(config);
+    updateActiveUserCase(activeUseCase);
 
-    setIsSignUp(false);
+    setIsSignUpValid(false);
     clearInterval(interval);
   }, [option]);
 
   const handleSubmitUseCaseSelectionInvalidValue = useCallback(async () => {
     setProgress(0);
-    setIsSignUp(true);
+    setIsSignUpInvalid(true);
     const interval = setInterval(() => {
       setProgress((old) => old + 1);
     }, 1000);
@@ -94,9 +131,10 @@ function UseCaseComponent() {
       useCaseUrl: "http://localhost:8000",
     };
 
-    await postUseCaseParticipation(invalidConfig);
+    const activeUseCase = await postUseCaseParticipation(invalidConfig);
+    updateActiveUserCase(activeUseCase);
 
-    setIsSignUp(false);
+    setIsSignUpInvalid(false);
     clearInterval(interval);
   }, [option]);
 
@@ -114,23 +152,14 @@ function UseCaseComponent() {
       useCaseUrl: "",
     };
 
-    await postUseCaseParticipation(deregisterConfig);
+    const activeUseCase = await postUseCaseParticipation(deregisterConfig);
+    updateActiveUserCase(activeUseCase);
 
     clearInterval(interval);
     setIsDeregister(false);
   }, [option]);
 
-  useEffect(() => {
-    getActiveUseCase()
-      .then((useCaseDidUrl) => {
-        const useCase = useCases.find((a) => a.did === useCaseDidUrl);
-        const activeUseCase = useCase ? useCase.name : "None";
-        setActiveUseCase(activeUseCase);
-      })
-      .catch((e) => setError(error + "\n" + e.toString()));
-  }, []);
-
-  const isServerBlocked = isDeregister || isSignUp;
+  const isServerBlocked = isDeregister || isSignUpInvalid || isSignUpValid;
 
   return (
     <section className="box">
@@ -148,7 +177,9 @@ function UseCaseComponent() {
           Abmelden
         </button>
 
-        {isDeregister && <progress max={60} value={progress} />}
+        {isDeregister && (
+          <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
+        )}
       </fieldset>
       <fieldset>
         <legend>Wechsel oder erstmalige Anmeldung an einem Use Case</legend>
@@ -156,20 +187,14 @@ function UseCaseComponent() {
         <p>
           <label>
             Use Case Name:
-            <select name="Use Case" onChange={handleChange}>
-              <option value="did:web:dive-greenproofs.energywebx.com">
-                Energy Web Green Proofs
-              </option>
-              <option value="did:web:dive-ett-proxy.energywebx.com">
-                Track & Trace (via Energy Web)
-              </option>
-              <option value="did:web:dive-flex.energywebx.com">
-                Energy Web Flex
-              </option>
-              <option value="did:web:dive-ev-supplier-switch.energywebx.com">
-                ReBeam: Lieferantenwechsel für BEV
-              </option>
-              <option value="did:web:example.com">Example</option>
+            <select
+              name="Use Case"
+              onChange={handleChange}
+              disabled={isServerBlocked}
+            >
+              {useCases.map((useCase) => (
+                <option value={useCase.did}> {useCase.name} </option>
+              ))}
             </select>
           </label>
         </p>
@@ -189,7 +214,9 @@ function UseCaseComponent() {
         >
           Anmelden (Regulär mit Abmeldung){" "}
         </button>
-        {isSignUp && <progress max={60} value={progress} />}
+        {isSignUpValid && (
+          <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
+        )}
         <p>
           Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der
           Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird
@@ -205,7 +232,9 @@ function UseCaseComponent() {
         >
           Anmelden (ohne Abmeldung)
         </button>
-        {isSignUp && <progress max={60} value={progress} />}
+        {isSignUpInvalid && (
+          <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
+        )}
       </fieldset>
       <fieldset>
         <legend>Bekanntmachen</legend>
@@ -215,11 +244,19 @@ function UseCaseComponent() {
         </p>
         <p>
           <label>
-            Use Case DID: <input name="New Use Case DID" required />
+            Use Case DID:{" "}
+            <input
+              name="New Use Case DID"
+              value={customUseCase}
+              required
+              onChange={(e) => setCustomUseCase(e.target.value)}
+            />
           </label>
         </p>
         {/* Adds an Use Case by did:web url to the device list, retrieves Use Case friendly name, API endpoint and public key from did doc and stores it in device storage */}
-        <button type="submit">Hinzufügen</button>
+        <button type="submit" onClick={handleAddUseCase}>
+          Hinzufügen
+        </button>
       </fieldset>
     </section>
   );

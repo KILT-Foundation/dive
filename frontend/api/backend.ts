@@ -92,10 +92,12 @@ export async function postClaim(claim: ICredential) {
 
 export async function postUseCaseParticipation(useCaseConfig: UseCaseConfig) {
   try {
-    await ky.post(`${API_URL}/use-case`, {
+    const response = await ky.post(`${API_URL}/use-case`, {
       json: useCaseConfig,
       timeout: false,
     });
+
+    return await response.json<string>();
   } catch (exception) {
     console.error(exception);
     throw exception;
