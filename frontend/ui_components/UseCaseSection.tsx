@@ -1,12 +1,6 @@
-import {
-  FormEvent,
-  Fragment,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { SetStateAction, useCallback, useEffect, useState } from "react";
 import { getActiveUseCase, postUseCaseParticipation } from "../api/backend";
+import { UseCaseConfig } from "../types";
 
 function UseCaseComponent() {
   const [option, setOption] = useState<string>();
@@ -46,7 +40,6 @@ function UseCaseComponent() {
 
   const handleChange = useCallback(
     (e: { target: { value: SetStateAction<string> } }) => {
-      console.log(e.target.value);
       setOption(e.target.value);
     },
     []
@@ -74,7 +67,14 @@ function UseCaseComponent() {
     }, 1000);
     setIsSignUp(true);
 
-    await postUseCaseParticipation(did, url, true, true);
+    const config: UseCaseConfig = {
+      notifyUseCase: true,
+      updateServiceEndpoint: true,
+      useCaseDidUrl: did,
+      useCaseUrl: url,
+    };
+
+    await postUseCaseParticipation(config);
 
     setIsSignUp(false);
     clearInterval(interval);
@@ -87,12 +87,14 @@ function UseCaseComponent() {
       setProgress((old) => old + 1);
     }, 1000);
 
-    await postUseCaseParticipation(
-      "invalid",
-      "http://localhost:8000",
-      false,
-      true
-    );
+    const invalidConfig: UseCaseConfig = {
+      notifyUseCase: true,
+      updateServiceEndpoint: false,
+      useCaseDidUrl: "invalid",
+      useCaseUrl: "http://localhost:8000",
+    };
+
+    await postUseCaseParticipation(invalidConfig);
 
     setIsSignUp(false);
     clearInterval(interval);
@@ -105,7 +107,14 @@ function UseCaseComponent() {
       setProgress((old) => old + 1);
     }, 1000);
 
-    await postUseCaseParticipation("deregistration", "", true, false);
+    const config: UseCaseConfig = {
+      notifyUseCase: false,
+      updateServiceEndpoint: true,
+      useCaseDidUrl: "deregistration",
+      useCaseUrl: "",
+    };
+
+    await postUseCaseParticipation(config);
 
     clearInterval(interval);
     setIsDeregister(false);
