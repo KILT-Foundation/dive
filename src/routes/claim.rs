@@ -2,7 +2,7 @@ use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 
 use crate::{
     device::{
-        file_manager::{get_claim_content, save_claim_content},
+        file_manager::{get_claim_content, save_claim_content, Mode},
         key_manager::KeyManager,
     },
     dto::Credential,
@@ -11,16 +11,17 @@ use crate::{
     AppState,
 };
 
-#[get("")]
-async fn get_base_claim() -> Result<impl Responder, ServerError> {
-    let claim = get_claim_content()?;
+#[get("/{mode}")]
+async fn get_base_claim(mode: web::Path<Mode>) -> Result<impl Responder, ServerError> {
+    let claim = get_claim_content(mode.into_inner())?;
     Ok(HttpResponse::Ok().json(claim))
 }
 
-#[post("")]
+#[post("/{mode}")]
 async fn post_base_claim(
     body: web::Json<Credential>,
     app_state: web::Data<AppState>,
+    mode: web::Path<Mode>,
 ) -> Result<impl Responder, ServerError> {
     let base_claim = body.0;
 
@@ -49,7 +50,7 @@ async fn post_base_claim(
 
     post_claim_to_attester(&jwt_token, &base_claim, &app_state.attester_endpoint).await?;
 
-    save_claim_content(&base_claim)?;
+    save_claim_content(&base_claim, mode.into_inner())?;
 
     Ok(HttpResponse::Ok().json(base_claim))
 }

@@ -1,16 +1,48 @@
+use actix_web::{Error, FromRequest, HttpRequest};
+use futures::future::{ready, Ready};
+use serde::{Deserialize, Serialize};
 use std::{fs, io, path::Path, str::FromStr};
 
 use super::{crypto::get_random_bytes, error::DeviceError, key_manager::PairKeyManager};
 use crate::dto::Credential;
 
 const KEY_FILE_PATH: &str = "./keys.json";
-const BASE_CLAIM_PATH: &str = "./base_claim.json";
+const BASE_CLAIM_PRODUCTION_PATH: &str = "./base_claim_production.json";
+const BASE_CLAIM_PRESENTATION_PATH: &str = "./base_claim_presentation.json";
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct KeysFileStructure {
     pub payment_account_seed: String,
     pub did_auth_seed: String,
+}
+
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Copy, Clone)]
+pub enum Mode {
+    Production,
+    Presentation,
+}
+
+impl FromStr for Mode {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "production" => Ok(Mode::Production),
+            "presentation" => Ok(Mode::Presentation),
+            _ => Err(()),
+        }
+    }
+}
+
+impl FromRequest for Mode {
+    type Error = Error;
+    type Future = Ready<Result<Self, Error>>;
+
+    fn from_request(req: &HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
+        let mode = req.match_info().get("mode").unwrap().parse().unwrap();
+        ready(Ok(mode))
+    }
 }
 
 /// Save the key file to the specified path.
@@ -80,15 +112,25 @@ pub fn reset_did_keys() -> Result<PairKeyManager, DeviceError> {
     }
 }
 
+fn get_claim_path(mode: Mode) -> &'static str {
+    if mode == Mode::Presentation {
+        BASE_CLAIM_PRESENTATION_PATH
+    } else {
+        BASE_CLAIM_PRODUCTION_PATH
+    }
+}
+
 /// Reads the content in [BASE_CLAIM_PATH]
-pub fn get_claim_content() -> Result<Credential, DeviceError> {
-    let base_claim = std::fs::read_to_string(BASE_CLAIM_PATH)?;
+pub fn get_claim_content(mode: Mode) -> Result<Credential, DeviceError> {
+    let base_claim_path = get_claim_path(mode);
+    let base_claim = std::fs::read_to_string(base_claim_path)?;
     let claim: Credential = serde_json::from_str(&base_claim)?;
     Ok(claim)
 }
 
 /// saves the credential in [BASE_CLAIM_PATH]
-pub fn save_claim_content(content: &Credential) -> Result<(), DeviceError> {
+pub fn save_claim_content(content: &Credential, mode: Mode) -> Result<(), DeviceError> {
+    let base_claim_path = get_claim_path(mode);
     let string_content = serde_json::to_string(content)?;
-    std::fs::write(BASE_CLAIM_PATH, &string_content).map_err(DeviceError::from)
+    std::fs::write(base_claim_path, &string_content).map_err(DeviceError::from)
 }
