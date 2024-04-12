@@ -97,7 +97,7 @@ function BoxComponent({
       const unapprovedClaim = await postClaim(newCredential, mode);
       setClaim(unapprovedClaim.contents);
     },
-    [boxDid]
+    [boxDid, mode]
   );
 
   const handleSelfCredential = useCallback(
