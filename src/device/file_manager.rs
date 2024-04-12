@@ -4,8 +4,8 @@ use super::{crypto::get_random_bytes, error::DeviceError, key_manager::PairKeyMa
 use crate::{dto::Credential, routes::Mode};
 
 const KEY_FILE_PATH: &str = "./keys.json";
-const BASE_CLAIM_PRODUCTION_PATH: &str = "./base_claim_production.json";
-const BASE_CLAIM_PRESENTATION_PATH: &str = "./base_claim_presentation.json";
+pub const BASE_CLAIM_PRODUCTION_PATH: &str = "./base_claim_production.json";
+pub const BASE_CLAIM_PRESENTATION_PATH: &str = "./base_claim_presentation.json";
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]

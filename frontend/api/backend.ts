@@ -7,6 +7,7 @@ import type {
   IClaim,
 } from "@kiltprotocol/types";
 import { AttestationResponse, UseCaseConfig, UseCaseResponse } from "../types";
+import { Mode } from "../App";
 
 export const API_URL = "http://localhost:3333/api/v1";
 
@@ -35,9 +36,9 @@ export async function getExistingDid() {
   }
 }
 
-export async function getClaim() {
+export async function getClaim(mode: Mode) {
   try {
-    const response = await ky.get(`${API_URL}/claim`);
+    const response = await ky.get(`${API_URL}/claim/${mode}`);
 
     const requestedClaim = await response.json<{ claim: IClaimContents }>();
 
@@ -77,9 +78,9 @@ export async function getCredential() {
   }
 }
 
-export async function postClaim(claim: ICredential) {
+export async function postClaim(claim: ICredential, mode: Mode) {
   try {
-    const response = await ky.post(`${API_URL}/claim`, {
+    const response = await ky.post(`${API_URL}/claim/${mode}`, {
       json: claim,
     });
     const data = await response.json<{ claim: IClaim }>();
@@ -90,9 +91,12 @@ export async function postClaim(claim: ICredential) {
   }
 }
 
-export async function postUseCaseParticipation(useCaseConfig: UseCaseConfig) {
+export async function postUseCaseParticipation(
+  useCaseConfig: UseCaseConfig,
+  mode: Mode
+) {
   try {
-    const response = await ky.post(`${API_URL}/use-case`, {
+    const response = await ky.post(`${API_URL}/use-case/${mode}`, {
       json: useCaseConfig,
       timeout: false,
     });

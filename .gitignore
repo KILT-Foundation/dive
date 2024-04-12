@@ -9,7 +9,7 @@ frontend/.parcel-cache/*
 
 .idea/
 .env 
-base_claim.json
+base_claim_*
 *.tar.gz
 *.openssh-privatekey
 *.io

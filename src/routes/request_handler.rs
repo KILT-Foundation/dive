@@ -1,7 +1,4 @@
-use actix_web::{Error, FromRequest, HttpRequest};
-use futures::future::{ready, Ready};
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Copy, Clone)]
 pub enum Mode {
@@ -9,24 +6,12 @@ pub enum Mode {
     Presentation,
 }
 
-impl FromStr for Mode {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+impl From<String> for Mode {
+    fn from(s: String) -> Self {
         match s.to_lowercase().as_str() {
-            "production" => Ok(Mode::Production),
-            "presentation" => Ok(Mode::Presentation),
-            _ => Err(()),
+            "production" => Mode::Production,
+            "presentation" => Mode::Presentation,
+            _ => Mode::Presentation,
         }
-    }
-}
-
-impl FromRequest for Mode {
-    type Error = Error;
-    type Future = Ready<Result<Self, Error>>;
-
-    fn from_request(req: &HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        let mode = req.match_info().get("mode").unwrap().parse().unwrap();
-        ready(Ok(mode))
     }
 }

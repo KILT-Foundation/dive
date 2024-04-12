@@ -10,7 +10,7 @@ use crate::{
         error::UseCaseAPIError,
         tx::{add_service_endpoint, remove_service_endpoint},
     },
-    routes::{dto::*, Mode},
+    routes::dto::*,
     AppState,
 };
 
@@ -18,7 +18,7 @@ use crate::{
 async fn participate_to_use_case(
     app_state: web::Data<AppState>,
     use_case_participation_message: web::Json<UseCaseParticipationMessage>,
-    mode: web::Path<Mode>,
+    mode: web::Path<String>,
 ) -> Result<impl Responder, ServerError> {
     let keys = app_state.key_manager.lock().await;
     let did_auth_signer = keys.get_did_auth_signer().clone();
@@ -70,7 +70,7 @@ async fn participate_to_use_case(
     }
 
     if *notify_use_case {
-        let credential = get_claim_content(mode.into_inner())?;
+        let credential = get_claim_content(mode.into_inner().into())?;
         post_use_case_participation(use_case_url, &formatted_did, credential).await?;
     }
 

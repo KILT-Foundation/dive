@@ -8,13 +8,12 @@ use crate::{
     dto::Credential,
     error::ServerError,
     http_client::{check_jwt_health, login_to_open_did, post_claim_to_attester},
-    routes::request_handler::Mode,
     AppState,
 };
 
 #[get("/{mode}")]
-async fn get_base_claim(mode: web::Path<Mode>) -> Result<impl Responder, ServerError> {
-    let claim = get_claim_content(mode.into_inner())?;
+async fn get_base_claim(mode: web::Path<String>) -> Result<impl Responder, ServerError> {
+    let claim = get_claim_content(mode.into_inner().into())?;
     Ok(HttpResponse::Ok().json(claim))
 }
 
@@ -22,7 +21,7 @@ async fn get_base_claim(mode: web::Path<Mode>) -> Result<impl Responder, ServerE
 async fn post_base_claim(
     body: web::Json<Credential>,
     app_state: web::Data<AppState>,
-    mode: web::Path<Mode>,
+    mode: web::Path<String>,
 ) -> Result<impl Responder, ServerError> {
     let base_claim = body.0;
 
@@ -51,7 +50,7 @@ async fn post_base_claim(
 
     post_claim_to_attester(&jwt_token, &base_claim, &app_state.attester_endpoint).await?;
 
-    save_claim_content(&base_claim, mode.into_inner())?;
+    save_claim_content(&base_claim, mode.into_inner().into())?;
 
     Ok(HttpResponse::Ok().json(base_claim))
 }
