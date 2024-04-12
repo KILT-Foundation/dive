@@ -1,55 +1,87 @@
-import {
-  FormEvent,
-  Fragment,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { SetStateAction, useCallback, useEffect, useState } from "react";
 import { getActiveUseCase, postUseCaseParticipation } from "../api/backend";
+import { UseCaseConfig } from "../types";
+
+const RawUseCases = [
+  {
+    name: "Energy Web Green Proofs",
+    did: "did:web:dive-greenproofs.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Track & Trace (via Energy Web)",
+    did: "did:web:dive-ett-proxy.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Energy Web Flex",
+    did: "did:web:dive-flex.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Energy Web Green Proofs",
+    did: "did:web:dive-ev-supplier-switch.energywebx.com",
+    url: "http://localhost:8000",
+  },
+  {
+    name: "Example",
+    did: "did:web:example.com",
+    url: "http://localhost:8000",
+  },
+];
 
 function UseCaseComponent() {
+  // states
   const [option, setOption] = useState<string>();
   const [activeUseCase, setActiveUseCase] = useState<string>();
   const [error, setError] = useState("");
+  const [customUseCase, setCustomUseCase] = useState<string>("");
+  const [progress, setProgress] = useState(0);
+  const [isDeregister, setIsDeregister] = useState(false);
+  const [isSignUpValid, setIsSignUpValid] = useState(false);
+  const [isSignUpInvalid, setIsSignUpInvalid] = useState(false);
+  const [useCases, setUseCases] = useState(RawUseCases);
 
-  const useCases = [
-    {
-      name: "Energy Web Green Proofs",
-      did: "did:web:dive-greenproofs.energywebx.com",
+  // helper functions
+
+  const updateActiveUserCase = (useCaseDidUrl: string) => {
+    const useCase = useCases.find((a) => a.did === useCaseDidUrl);
+    const activeUseCase = useCase ? useCase.name : "None";
+    setActiveUseCase(activeUseCase);
+  };
+
+  // side effects
+
+  useEffect(() => {
+    getActiveUseCase()
+      .then((useCaseDidUrl) => {
+        updateActiveUserCase(useCaseDidUrl);
+      })
+      .catch((e) => setError(error + "\n" + e.toString()));
+  }, []);
+
+  // callbacks
+
+  const handleAddUseCase = useCallback(() => {
+    const upd = [...useCases];
+    upd.push({
+      did: customUseCase,
+      name: customUseCase,
       url: "http://localhost:8000",
-    },
-    {
-      name: "Track & Trace (via Energy Web)",
-      did: "did:web:dive-ett-proxy.energywebx.com",
-      url: "http://localhost:8000",
-    },
-    {
-      name: "Energy Web Flex",
-      did: "did:web:dive-flex.energywebx.com",
-      url: "http://localhost:8000",
-    },
-    {
-      name: "Energy Web Green Proofs",
-      did: "did:web:dive-ev-supplier-switch.energywebx.com",
-      url: "http://localhost:8000",
-    },
-    {
-      name: "Example",
-      did: "did:web:example.com",
-      url: "http://localhost:8000",
-    },
-  ];
+    });
+
+    setUseCases(upd);
+    setCustomUseCase("");
+  }, [customUseCase]);
 
   const handleChange = useCallback(
     (e: { target: { value: SetStateAction<string> } }) => {
-      console.log(e.target.value);
       setOption(e.target.value);
     },
     []
   );
 
-  const handleSubmitUseCaseSelection = useCallback(() => {
+  const handleSubmitUseCaseSelection = useCallback(async () => {
     if (option === undefined) {
       return;
     }
@@ -57,7 +89,7 @@ function UseCaseComponent() {
     const selectedUseCase = useCases.filter((a) => a.did === option);
 
     if (selectedUseCase.length === 0) {
-      console.error("Selected not existing use case");
+      console.error("Selected use case does not exists");
       return;
     }
 
@@ -65,26 +97,69 @@ function UseCaseComponent() {
 
     const { did, url } = useCase;
 
-    postUseCaseParticipation(did, url, true, true);
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress((old) => old + 1);
+    }, 1000);
+    setIsSignUpValid(true);
+
+    const config: UseCaseConfig = {
+      notifyUseCase: true,
+      updateServiceEndpoint: true,
+      useCaseDidUrl: did,
+      useCaseUrl: url,
+    };
+
+    const activeUseCase = await postUseCaseParticipation(config);
+    updateActiveUserCase(activeUseCase);
+
+    setIsSignUpValid(false);
+    clearInterval(interval);
   }, [option]);
 
-  const handleSubmitUseCaseSelectionInvalidValue = useCallback(() => {
-    postUseCaseParticipation("invalid", "http://localhost:8000", false, true);
+  const handleSubmitUseCaseSelectionInvalidValue = useCallback(async () => {
+    setProgress(0);
+    setIsSignUpInvalid(true);
+    const interval = setInterval(() => {
+      setProgress((old) => old + 1);
+    }, 1000);
+
+    const invalidConfig: UseCaseConfig = {
+      notifyUseCase: true,
+      updateServiceEndpoint: false,
+      useCaseDidUrl: "invalid",
+      useCaseUrl: "http://localhost:8000",
+    };
+
+    const activeUseCase = await postUseCaseParticipation(invalidConfig);
+    updateActiveUserCase(activeUseCase);
+
+    setIsSignUpInvalid(false);
+    clearInterval(interval);
   }, [option]);
 
-  const handleSubmitUseCaseDeregistration = useCallback(() => {
-    postUseCaseParticipation("deregistration", "", true, false);
+  const handleSubmitUseCaseDeregistration = useCallback(async () => {
+    setProgress(0);
+    setIsDeregister(true);
+    const interval = setInterval(() => {
+      setProgress((old) => old + 1);
+    }, 1000);
+
+    const deregisterConfig: UseCaseConfig = {
+      notifyUseCase: false,
+      updateServiceEndpoint: true,
+      useCaseDidUrl: "deregistration",
+      useCaseUrl: "",
+    };
+
+    const activeUseCase = await postUseCaseParticipation(deregisterConfig);
+    updateActiveUserCase(activeUseCase);
+
+    clearInterval(interval);
+    setIsDeregister(false);
   }, [option]);
 
-  useEffect(() => {
-    getActiveUseCase()
-      .then((useCaseDidUrl) => {
-        const useCase = useCases.find((a) => a.did === useCaseDidUrl);
-        const activeUseCase = useCase ? useCase.name : "None";
-        setActiveUseCase(activeUseCase);
-      })
-      .catch((e) => setError(error + "\n" + e.toString()));
-  }, []);
+  const isServerBlocked = isDeregister || isSignUpInvalid || isSignUpValid;
 
   return (
     <section className="box">
@@ -94,9 +169,17 @@ function UseCaseComponent() {
         <legend>Aktueller Use Case</legend>
         <p>Die Anlage ist aktuell angemeldet für: {activeUseCase}</p>
         {/* invalidates the DIVE conflict token, e.g. empty string */}
-        <button type="submit" onClick={handleSubmitUseCaseDeregistration}>
+        <button
+          disabled={isServerBlocked}
+          type="submit"
+          onClick={handleSubmitUseCaseDeregistration}
+        >
           Abmelden
         </button>
+
+        {isDeregister && (
+          <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
+        )}
       </fieldset>
       <fieldset>
         <legend>Wechsel oder erstmalige Anmeldung an einem Use Case</legend>
@@ -104,20 +187,14 @@ function UseCaseComponent() {
         <p>
           <label>
             Use Case Name:
-            <select name="Use Case" onChange={handleChange}>
-              <option value="did:web:dive-greenproofs.energywebx.com">
-                Energy Web Green Proofs
-              </option>
-              <option value="did:web:dive-ett-proxy.energywebx.com">
-                Track & Trace (via Energy Web)
-              </option>
-              <option value="did:web:dive-flex.energywebx.com">
-                Energy Web Flex
-              </option>
-              <option value="did:web:dive-ev-supplier-switch.energywebx.com">
-                ReBeam: Lieferantenwechsel für BEV
-              </option>
-              <option value="did:web:example.com">Example</option>
+            <select
+              name="Use Case"
+              onChange={handleChange}
+              disabled={isServerBlocked}
+            >
+              {useCases.map((useCase) => (
+                <option value={useCase.did}> {useCase.name} </option>
+              ))}
             </select>
           </label>
         </p>
@@ -131,11 +208,15 @@ function UseCaseComponent() {
             then calls the use case api to register the device for participation */}
         <button
           type="submit"
+          disabled={isServerBlocked}
           onClick={handleSubmitUseCaseSelection}
           title="Bei der regulären Anmeldung wird der 'Konflikt-Token' vor der Anmeldung aktualisiert. Dies entspricht einer Abmeldung beim vorherigen Use Case und vermeidet daher mehrere, glechzeitige Use Case Teilnahmen."
         >
-          Anmelden (Regulär mit Abmeldung)
+          Anmelden (Regulär mit Abmeldung){" "}
         </button>
+        {isSignUpValid && (
+          <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
+        )}
         <p>
           Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der
           Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird
@@ -145,11 +226,15 @@ function UseCaseComponent() {
         {/* calls the user case api to register the device for participation without updating the DIVE conflict token (for demo purpose; will lead to an error) */}
         <button
           type="submit"
+          disabled={isServerBlocked}
           onClick={handleSubmitUseCaseSelectionInvalidValue}
           title="Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird fehlschlagen. Die Anlage wird folglich nicht tatsächlich beim Use Case angemeldet."
         >
           Anmelden (ohne Abmeldung)
         </button>
+        {isSignUpInvalid && (
+          <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
+        )}
       </fieldset>
       <fieldset>
         <legend>Bekanntmachen</legend>
@@ -159,11 +244,19 @@ function UseCaseComponent() {
         </p>
         <p>
           <label>
-            Use Case DID: <input name="New Use Case DID" required />
+            Use Case DID:{" "}
+            <input
+              name="New Use Case DID"
+              value={customUseCase}
+              required
+              onChange={(e) => setCustomUseCase(e.target.value)}
+            />
           </label>
         </p>
         {/* Adds an Use Case by did:web url to the device list, retrieves Use Case friendly name, API endpoint and public key from did doc and stores it in device storage */}
-        <button type="submit">Hinzufügen</button>
+        <button type="submit" onClick={handleAddUseCase}>
+          Hinzufügen
+        </button>
       </fieldset>
     </section>
   );

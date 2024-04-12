@@ -1,11 +1,15 @@
 use sp_core::H256;
 use std::str::FromStr;
-use subxt::{ext::sp_core::sr25519::Pair as Sr25519Pair, tx::TxPayload, utils::AccountId32};
 use subxt::{
-    ext::{codec::Encode, sp_core::sr25519::Pair, sp_runtime::MultiSignature},
-    tx::{PairSigner, Signer},
+    blocks::ExtrinsicEvents,
+    ext::{
+        codec::Encode, scale_encode::EncodeAsFields, sp_core::sr25519::Pair,
+        sp_runtime::MultiSignature,
+    },
+    tx::{PairSigner, Payload, Signer},
     OnlineClient,
 };
+use subxt::{tx::TxPayload, utils::AccountId32};
 
 use crate::kilt::{
     error::TxError,
@@ -61,16 +65,31 @@ impl FromStr for WaitFor {
     }
 }
 
+async fn submit_tx<T>(
+    chain_client: &OnlineClient<KiltConfig>,
+    signer: &PairSigner<KiltConfig, Pair>,
+    tx: &Payload<T>,
+) -> Result<ExtrinsicEvents<KiltConfig>, subxt::Error>
+where
+    T: EncodeAsFields,
+{
+    let final_tx = chain_client
+        .tx()
+        .sign_and_submit_then_watch_default(tx, signer)
+        .await?;
+    final_tx.wait_for_finalized_success().await
+}
+
 pub async fn submit_call(
     chain_client: &OnlineClient<KiltConfig>,
-    signer: &PairSigner<KiltConfig, Sr25519Pair>,
-    call: &Vec<u8>,
+    signer: &PairSigner<KiltConfig, Pair>,
+    call: Vec<u8>,
     wait_for: WaitFor,
 ) -> Result<String, TxError> {
-    let call = RawCall { call: call.clone() };
+    let raw_call = RawCall { call };
     let mut progress = chain_client
         .tx()
-        .sign_and_submit_then_watch_default(&call, signer)
+        .sign_and_submit_then_watch_default(&raw_call, signer)
         .await?;
     log::info!(
         "Submitted Extrinsic with hash {:?}",
@@ -139,8 +158,8 @@ pub async fn create_claim(
     ctype_hash: sp_core::H256,
     did_address: &AccountId32,
     chain_client: &OnlineClient<KiltConfig>,
-    payer: &PairSigner<KiltConfig, Sr25519Pair>,
-    signer: &PairSigner<KiltConfig, Sr25519Pair>,
+    payer: &PairSigner<KiltConfig, Pair>,
+    signer: &PairSigner<KiltConfig, Pair>,
 ) -> Result<Vec<u8>, subxt::Error> {
     let tx_counter = get_next_tx_counter(&chain_client, &did_address).await?;
     let block_number = get_current_block(&chain_client).await?;
@@ -163,14 +182,9 @@ pub async fn create_claim(
 
     let signature = calculate_signature(&did_call.encode(), signer);
     let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
-    let events = chain_client
-        .tx()
-        .sign_and_submit_then_watch_default(&final_tx, payer)
-        .await?
-        .wait_for_finalized_success()
-        .await;
+    let events = submit_tx(chain_client, payer, &final_tx).await?;
 
-    let created_event = events?.find_first::<runtime::attestation::events::AttestationCreated>()?;
+    let created_event = events.find_first::<runtime::attestation::events::AttestationCreated>()?;
 
     if let Some(_) = created_event {
         log::info!("Attestation with root hash {:?} created", claim_hash);
@@ -205,12 +219,7 @@ pub async fn create_did(
         MultiSignature::Ecdsa(sig) => DidSignature::Ecdsa(ecdsa::Signature(sig.0)),
     };
     let tx = runtime::tx().did().create(details, did_sig);
-    let events = chain_client
-        .tx()
-        .sign_and_submit_then_watch_default(&tx, submitter_signer)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
+    let events = submit_tx(chain_client, submitter_signer, &tx).await?;
     Ok(events.extrinsic_hash())
 }
 
@@ -247,14 +256,9 @@ pub async fn add_service_endpoint(
 
     let signature = calculate_signature(&did_call.encode(), did_signer);
     let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
-    let error = chain_client
-        .tx()
-        .sign_and_submit_then_watch_default(&final_tx, submitter_signer)
-        .await;
+    let events = submit_tx(chain_client, submitter_signer, &final_tx).await?;
 
-    let events = error?.wait_for_finalized_success().await;
-
-    let update_event = events?.find_first::<runtime::did::events::DidUpdated>()?;
+    let update_event = events.find_first::<runtime::did::events::DidUpdated>()?;
 
     if let Some(_) = update_event {
         log::info!("Service endpoint with url: {:?} added", url);
@@ -292,14 +296,9 @@ pub async fn remove_service_endpoint(
 
     let signature = calculate_signature(&did_call.encode(), did_signer);
     let final_tx = runtime::tx().did().submit_did_call(did_call, signature);
-    let events = chain_client
-        .tx()
-        .sign_and_submit_then_watch_default(&final_tx, submitter_signer)
-        .await?
-        .wait_for_finalized_success()
-        .await;
+    let events = submit_tx(chain_client, submitter_signer, &final_tx).await?;
 
-    let update_event = events?.find_first::<runtime::did::events::DidUpdated>()?;
+    let update_event = events.find_first::<runtime::did::events::DidUpdated>()?;
 
     if let Some(_) = update_event {
         log::info!("Service endpoint with service id: {:?} removed", service_id);

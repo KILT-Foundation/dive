@@ -2,7 +2,7 @@ use base58::FromBase58;
 use serde_with::{serde_as, Bytes};
 use sodiumoxide::crypto::box_;
 use std::str::FromStr;
-use subxt::OnlineClient;
+use subxt::{ext::sp_core::crypto::Ss58Codec, tx::Signer, OnlineClient};
 
 use crate::kilt::{
     error::{CredentialAPIError, DidError, TxError},
@@ -153,4 +153,13 @@ pub async fn get_encryption_key_from_fulldid_key_uri(
         return Err(CredentialAPIError::Did("Invalid sender public key"));
     };
     box_::PublicKey::from_slice(&pk).ok_or(CredentialAPIError::Did("Invalid sender public key"))
+}
+
+pub fn get_did_address(keys: impl Signer<KiltConfig>) -> String {
+    format!(
+        "{}{}",
+        DID_PREFIX,
+        keys.account_id()
+            .to_ss58check_with_version(ADDRESS_FORMAT.into())
+    )
 }
