@@ -47,7 +47,7 @@ export function PresentationClaimSection({ hasDid }: { hasDid: boolean }) {
       </p>
       <p>
         <label>
-          Nennleistung (kW): Unternehmenstyp:
+          Nennleistung (kW):
           <input name="Nennleistung (kW)" required type="number" />
         </label>
       </p>
