@@ -1,5 +1,7 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactJson from "react-json-view";
+import { Mode } from "../../App";
+import { presentationCtype, productionCtype } from "../../ctypes";
 
 const productionEntries = [
   "Vorname",
@@ -244,28 +246,41 @@ export function ProductionClaimSection({ hasDid }: { hasDid: boolean }) {
   );
 }
 
-export function PresentationCredentialSection({ credential, claim }) {
+export function PresentationCredentialSection({ credentials, claim }) {
   return (
     <CredentialSection
-      credential={credential}
+      credentials={credentials}
       claim={claim}
       entries={presentationEntries}
+      mode={Mode.presentation}
     />
   );
 }
 
-export function ProductionCredentialSection({ credential, claim }) {
+export function ProductionCredentialSection({ credentials, claim }) {
   return (
     <CredentialSection
-      credential={credential}
+      credentials={credentials}
       claim={claim}
       entries={productionEntries}
+      mode={Mode.production}
     />
   );
 }
 
-function CredentialSection({ credential, claim, entries }) {
+function CredentialSection({ credentials, claim, entries, mode }) {
   const credentialDialogRef = useRef<HTMLDialogElement>();
+  const [credential, setCredential] = useState(undefined);
+
+  useEffect(() => {
+    const targetCtype =
+      mode === Mode.presentation ? presentationCtype : productionCtype;
+    const targetCredential = credentials.find(
+      (credential) =>
+        `kilt:ctype:${credential.claim.cTypeHash}` === targetCtype.$id
+    );
+    setCredential(targetCredential);
+  }, [credentials, mode, presentationCtype, productionCtype]);
 
   const handleShowCredentialClick = useCallback(() => {
     credentialDialogRef.current?.showModal();

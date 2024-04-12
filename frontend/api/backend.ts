@@ -61,14 +61,9 @@ export async function getCredential() {
       return undefined;
     }
 
-    // we are currently only supporting a single credential. Has to be changed once the olibox is able to hold multiple.
-    let requestedCredential = data[0];
+    const requestedCredentials = data.map((d) => d.credential);
 
-    if (!requestedCredential.approved) {
-      return undefined;
-    }
-
-    return requestedCredential.credential;
+    return requestedCredentials;
   } catch (exception) {
     if ((exception as HTTPError).response.status === 404) {
       return undefined;

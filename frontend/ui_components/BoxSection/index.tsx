@@ -42,7 +42,7 @@ function BoxComponent({
 }) {
   // states
   const [claim, setClaim] = useState(undefined);
-  const [credential, setCredential] = useState(undefined);
+  const [credential, setCredential] = useState([]);
 
   const [error, setError] = useState("");
 
@@ -54,7 +54,7 @@ function BoxComponent({
       .catch((e) => setError(error + "\n" + e.toString()));
 
     getCredential()
-      .then((credential) => setCredential(credential))
+      .then((credentials) => setCredential(credentials))
       .catch((e) => setError(error + "\n" + e.toString()));
   }, [mode]);
 
@@ -159,12 +159,12 @@ function BoxComponent({
         {claim &&
           (mode === Mode.presentation ? (
             <PresentationCredentialSection
-              credential={credential}
+              credentials={credential}
               claim={claim}
             />
           ) : (
             <ProductionCredentialSection
-              credential={credential}
+              credentials={credential}
               claim={claim}
             />
           ))}
