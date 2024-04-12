@@ -2,12 +2,13 @@ use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 
 use crate::{
     device::{
-        file_manager::{get_claim_content, save_claim_content, Mode},
+        file_manager::{get_claim_content, save_claim_content},
         key_manager::KeyManager,
     },
     dto::Credential,
     error::ServerError,
     http_client::{check_jwt_health, login_to_open_did, post_claim_to_attester},
+    routes::request_handler::Mode,
     AppState,
 };
 
@@ -34,9 +35,9 @@ async fn post_base_claim(
 
     let mut jwt_token = app_state.jwt_token.lock().await;
 
-    let is_jwt_healty = check_jwt_health(&jwt_token);
+    let is_jwt_healthy = check_jwt_health(&jwt_token);
 
-    if !is_jwt_healty {
+    if !is_jwt_healthy {
         let new_token = login_to_open_did(
             chain_client,
             sign_pair,

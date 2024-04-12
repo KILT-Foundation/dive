@@ -1,10 +1,7 @@
 use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 
 use crate::{
-    device::{
-        file_manager::{get_claim_content, Mode},
-        key_manager::KeyManager,
-    },
+    device::{file_manager::get_claim_content, key_manager::KeyManager},
     dto::UseCaseResponse,
     error::ServerError,
     http_client::post_use_case_participation,
@@ -13,7 +10,7 @@ use crate::{
         error::UseCaseAPIError,
         tx::{add_service_endpoint, remove_service_endpoint},
     },
-    routes::dto::*,
+    routes::{dto::*, Mode},
     AppState,
 };
 
