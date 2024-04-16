@@ -38,7 +38,15 @@ const productionEntries = [
   "Verteilnetzbetreiber",
 ];
 
-const presentationEntries = ["Art der Anlage", "Nennleistung (kW)", "Standort"];
+const presentationEntries = [
+  "Art der Anlage",
+  "Nennleistung (kW)",
+  "Standort",
+  "SMGW ID",
+  "Meter ID",
+  "Messlokations-ID",
+  "Marktlokations-ID",
+];
 
 export function PresentationClaimSection({ hasDid }: { hasDid: boolean }) {
   return (
@@ -56,6 +64,26 @@ export function PresentationClaimSection({ hasDid }: { hasDid: boolean }) {
       <p>
         <label>
           Standort: <input name="Standort" required />
+        </label>
+      </p>
+      <p>
+        <label>
+          SMGW ID: <input name="SMGW ID" required />
+        </label>
+      </p>
+      <p>
+        <label>
+          Meter ID: <input name="Meter ID" required />
+        </label>
+      </p>
+      <p>
+        <label>
+          Messlokations-ID: <input name="Messlokations-ID" required />
+        </label>
+      </p>
+      <p>
+        <label>
+          Marktlokations-ID: <input name="Marktlokations-ID" required />
         </label>
       </p>
 

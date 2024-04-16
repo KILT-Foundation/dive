@@ -110,7 +110,7 @@ export const productionCtype = {
 } as ICType;
 
 export const presentationCtype = {
-  $id: "kilt:ctype:0xc945ec1d1bc96dcef2c6f1198047c2be7edf7beb5f82c418a19c6614033c6256",
+  $id: "kilt:ctype:0xbde8192c1a7e67395218029a7028af448505238c85123cb8a4fbe274bf45f71f",
   $schema:
     "ipfs://bafybeiah66wbkhqbqn7idkostj2iqyan2tstc4tpqt65udlhimd7hcxjyq/",
   additionalProperties: false,
@@ -118,8 +118,20 @@ export const presentationCtype = {
     "Art der Anlage": {
       type: "string",
     },
+    "Marktlokations-ID": {
+      type: "string",
+    },
+    "Messlokations-ID": {
+      type: "string",
+    },
+    "Meter ID": {
+      type: "string",
+    },
     "Nennleistung (kW)": {
       type: "number",
+    },
+    "SMGW ID": {
+      type: "string",
     },
     Standort: {
       type: "string",
