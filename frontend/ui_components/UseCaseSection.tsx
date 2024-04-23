@@ -7,27 +7,27 @@ const RawUseCases = [
   {
     name: "Energy Web Green Proofs",
     did: "did:web:dive-greenproofs.energywebx.com",
-    url: "http://localhost:8000",
+    url: "http://greenproofs.dive.energyweb.org",
   },
   {
     name: "Track & Trace (via Energy Web)",
     did: "did:web:dive-ett-proxy.energywebx.com",
-    url: "http://localhost:8000",
+    url: "http://greenproofs.dive.energyweb.org",
   },
   {
     name: "Energy Web Flex",
     did: "did:web:dive-flex.energywebx.com",
-    url: "http://localhost:8000",
+    url: "http://greenproofs.dive.energyweb.org",
   },
   {
     name: "Energy Web Green Proofs",
     did: "did:web:dive-ev-supplier-switch.energywebx.com",
-    url: "http://localhost:8000",
+    url: "http://greenproofs.dive.energyweb.org",
   },
   {
     name: "Example",
     did: "did:web:example.com",
-    url: "http://localhost:8000",
+    url: "http://greenproofs.dive.energyweb.org",
   },
 ];
 
@@ -68,7 +68,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
     upd.push({
       did: customUseCase,
       name: customUseCase,
-      url: "http://localhost:8000",
+      url: "http://greenproofs.dive.energyweb.org",
     });
 
     setUseCases(upd);
@@ -111,7 +111,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
       useCaseUrl: url,
     };
 
-    const activeUseCase = await postUseCaseParticipation(config, mode);
+    const activeUseCase = await postUseCaseParticipation(config);
     updateActiveUserCase(activeUseCase);
 
     setIsSignUpValid(false);
@@ -129,10 +129,10 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
       notifyUseCase: true,
       updateServiceEndpoint: false,
       useCaseDidUrl: "invalid",
-      useCaseUrl: "http://localhost:8000",
+      useCaseUrl: "http://greenproofs.dive.energyweb.org",
     };
 
-    const activeUseCase = await postUseCaseParticipation(invalidConfig, mode);
+    const activeUseCase = await postUseCaseParticipation(invalidConfig);
     updateActiveUserCase(activeUseCase);
 
     setIsSignUpInvalid(false);
@@ -153,10 +153,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
       useCaseUrl: "",
     };
 
-    const activeUseCase = await postUseCaseParticipation(
-      deregisterConfig,
-      mode
-    );
+    const activeUseCase = await postUseCaseParticipation(deregisterConfig);
     updateActiveUserCase(activeUseCase);
 
     clearInterval(interval);
