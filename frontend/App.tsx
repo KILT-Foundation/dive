@@ -7,6 +7,7 @@ import Footer from "./ui_components/FooterSection";
 import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
 import UseCaseComponent from "./ui_components/UseCaseSection";
+import * as localStorageHandler from "./api/localStorage";
 
 export enum Mode {
   production = "production",
@@ -36,6 +37,9 @@ export function App() {
     getPaymentAddress()
       .then((address) => setAddress(address))
       .catch((e) => setError(error + "\n" + e.toString()));
+
+    let mode = localStorageHandler.getMode();
+    setMode(mode);
   }, []);
 
   // Callbacks
@@ -103,6 +107,16 @@ export function App() {
     [address]
   );
 
+  const handleModeSwitch = async () => {
+    if (mode === Mode.production) {
+      localStorageHandler.setMode(Mode.presentation);
+    } else {
+      localStorageHandler.setMode(Mode.production);
+    }
+    await ky.delete(API_URL + "/did");
+    window.location.reload();
+  };
+
   const handleGetOwnerDIDsClick = useCallback(
     async (event: FormEvent<HTMLButtonElement>) => {
       try {
@@ -127,7 +141,7 @@ export function App() {
         ownerDidPending={ownerDidPending}
         progress={progress}
         mode={mode}
-        setMode={setMode}
+        handleModeSwitch={handleModeSwitch}
       />
       <OperatorComponent
         address={address}

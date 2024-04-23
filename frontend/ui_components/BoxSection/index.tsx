@@ -30,7 +30,7 @@ function BoxComponent({
   ownerDidPending,
   progress,
   mode,
-  setMode,
+  handleModeSwitch,
 }: {
   boxDid: DidUri;
   boxDidPending: boolean;
@@ -38,7 +38,7 @@ function BoxComponent({
   ownerDidPending: boolean;
   progress: number;
   mode: Mode;
-  setMode: (mode: Mode) => void;
+  handleModeSwitch: () => void;
 }) {
   // states
   const [claim, setClaim] = useState(undefined);
@@ -49,7 +49,7 @@ function BoxComponent({
   // side effects
 
   useEffect(() => {
-    getClaim(mode)
+    getClaim()
       .then((claim) => setClaim(claim))
       .catch((e) => setError(error + "\n" + e.toString()));
 
@@ -59,14 +59,6 @@ function BoxComponent({
   }, [mode]);
 
   // Callbacks
-
-  const handleModeSwitch = () => {
-    if (mode === Mode.production) {
-      setMode(Mode.presentation);
-    } else {
-      setMode(Mode.production);
-    }
-  };
 
   const handleClaimSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -94,7 +86,7 @@ function BoxComponent({
 
       const newCredential = Credential.fromClaim(claim);
 
-      const unapprovedClaim = await postClaim(newCredential, mode);
+      const unapprovedClaim = await postClaim(newCredential);
       setClaim(unapprovedClaim.contents);
     },
     [boxDid, mode]

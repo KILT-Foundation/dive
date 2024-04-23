@@ -305,7 +305,8 @@ function CredentialSection({ credentials, claim, entries, mode }) {
       mode === Mode.presentation ? presentationCtype : productionCtype;
     const targetCredential = credentials.find(
       (credential) =>
-        `kilt:ctype:${credential.claim.cTypeHash}` === targetCtype.$id
+        `kilt:ctype:${credential.credential.claim.cTypeHash}` ===
+          targetCtype.$id && credential.approved
     );
     setCredential(targetCredential);
   }, [credentials, mode, presentationCtype, productionCtype]);
@@ -345,7 +346,7 @@ function CredentialSection({ credentials, claim, entries, mode }) {
         <form method="dialog">
           <button type="submit">✖️</button>
         </form>
-        <ReactJson src={credential} />
+        <ReactJson src={credential ? credential.credential : []} />
       </dialog>
       {!credential && <p>💡️ Zertifikat in Bearbeitung</p>}
     </fieldset>

@@ -2,10 +2,7 @@ use actix_web::{delete, get, post, web, HttpResponse, Responder, Scope};
 use subxt::ext::sp_core::crypto::Ss58Codec;
 
 use crate::{
-    device::{
-        file_manager::{BASE_CLAIM_PRESENTATION_PATH, BASE_CLAIM_PRODUCTION_PATH},
-        key_manager::KeyManager,
-    },
+    device::{file_manager::BASE_CLAIM_PATH, key_manager::KeyManager},
     dto::{DidAddress, TxResponse},
     error::ServerError,
     kilt::{
@@ -66,8 +63,7 @@ async fn reset(app_state: web::Data<AppState>) -> Result<impl Responder, ServerE
     let mut key_manager = app_state.key_manager.lock().await;
     *key_manager = new_key_manager;
 
-    let _ = tokio::fs::remove_file(BASE_CLAIM_PRODUCTION_PATH).await;
-    let _ = tokio::fs::remove_file(BASE_CLAIM_PRESENTATION_PATH).await;
+    let _ = tokio::fs::remove_file(BASE_CLAIM_PATH).await;
 
     Ok(HttpResponse::Ok())
 }
