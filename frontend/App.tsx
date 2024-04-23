@@ -8,7 +8,13 @@ import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
 import UseCaseComponent from "./ui_components/UseCaseSection";
 
+export enum Mode {
+  production = "production",
+  presentation = "presentation",
+}
+
 export function App() {
+  const [mode, setMode] = useState<Mode>(Mode.presentation);
   const [boxDidPending, setBoxDidPending] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -120,6 +126,8 @@ export function App() {
         handleCreateBoxDIDClick={handleCreateBoxDIDClick}
         ownerDidPending={ownerDidPending}
         progress={progress}
+        mode={mode}
+        setMode={setMode}
       />
       <OperatorComponent
         address={address}
@@ -131,7 +139,7 @@ export function App() {
         handleCreateOwnerDIDClick={handleCreateOwnerDIDClick}
         handleGetOwnerDIDsClick={handleGetOwnerDIDsClick}
       />
-      <UseCaseComponent />
+      <UseCaseComponent mode={mode} />
       <Footer />
     </>
   );

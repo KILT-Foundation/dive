@@ -1,16 +1,27 @@
 import { Claim, Credential } from "@kiltprotocol/core";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import ReactJson from "react-json-view";
 import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
-import { certificateCtype, selfIssuedCtype } from "../ctypes";
-import { getClaim, getCredential, postClaim } from "../api/backend";
+import {
+  productionCtype,
+  presentationCtype,
+  selfIssuedCtype,
+} from "../../ctypes";
+import { getClaim, getCredential, postClaim } from "../../api/backend";
 import {
   InjectedWindowProvider,
   getExtensions,
 } from "@kiltprotocol/kilt-extension-api";
-import { getSession } from "../api/session";
-import { fetchCredential } from "../api/credential";
+import { getSession } from "../../api/session";
+import { fetchCredential } from "../../api/credential";
+
+import {
+  PresentationClaimSection,
+  PresentationCredentialSection,
+  ProductionClaimSection,
+  ProductionCredentialSection,
+} from "./CredentialClaim";
+import { Mode } from "../../App";
 
 function BoxComponent({
   boxDid,
@@ -18,58 +29,75 @@ function BoxComponent({
   handleCreateBoxDIDClick,
   ownerDidPending,
   progress,
+  mode,
+  setMode,
 }: {
   boxDid: DidUri;
   boxDidPending: boolean;
   handleCreateBoxDIDClick: () => Promise<void>;
   ownerDidPending: boolean;
   progress: number;
+  mode: Mode;
+  setMode: (mode: Mode) => void;
 }) {
+  // states
   const [claim, setClaim] = useState(undefined);
-  const [credential, setCredential] = useState(undefined);
+  const [credential, setCredential] = useState([]);
+
   const [error, setError] = useState("");
 
-  // callbacks
+  // side effects
 
   useEffect(() => {
-    getClaim()
+    getClaim(mode)
       .then((claim) => setClaim(claim))
       .catch((e) => setError(error + "\n" + e.toString()));
 
     getCredential()
-      .then((credential) => setCredential(credential))
+      .then((credentials) => setCredential(credentials))
       .catch((e) => setError(error + "\n" + e.toString()));
-  }, []);
+  }, [mode]);
 
   // Callbacks
-  const credentialDialogRef = useRef<HTMLDialogElement>();
-  const handleShowCredentialClick = useCallback(() => {
-    credentialDialogRef.current?.showModal();
-  }, []);
+
+  const handleModeSwitch = () => {
+    if (mode === Mode.production) {
+      setMode(Mode.presentation);
+    } else {
+      setMode(Mode.production);
+    }
+  };
 
   const handleClaimSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       const formData = new FormData(event.currentTarget);
-      const json = Object.fromEntries(formData.entries());
 
-      const claimContent = {
-        "Art der Anlage": json["Art der Anlage"],
-        "Nennleistung (kW)": parseInt(json["Nennleistung (kW)"] as string, 10),
-        Standort: json["Standort"],
-      } as IClaimContents;
+      const claimContent = Object.fromEntries(
+        formData.entries()
+      ) as IClaimContents;
+
+      const ctype =
+        mode === Mode.production ? productionCtype : presentationCtype;
+
+      Object.entries(ctype.properties).forEach(([key, value]) => {
+        if ("type" in value && value.type === "number" && key in claimContent) {
+          claimContent[key] = parseInt(claimContent[key] as string, 10);
+        }
+      });
 
       const claim = Claim.fromCTypeAndClaimContents(
-        certificateCtype,
+        ctype,
         claimContent,
         boxDid
       );
+
       const newCredential = Credential.fromClaim(claim);
 
-      const unapprovedClaim = await postClaim(newCredential);
+      const unapprovedClaim = await postClaim(newCredential, mode);
       setClaim(unapprovedClaim.contents);
     },
-    [boxDid]
+    [boxDid, mode]
   );
 
   const handleSelfCredential = useCallback(
@@ -124,65 +152,32 @@ function BoxComponent({
             {boxDidPending && <progress max={60} value={progress} />}
           </p>
         )}
+        <button style={{ margin: "10px" }} onClick={handleModeSwitch}>
+          {mode}
+        </button>
 
-        {claim && (
-          <fieldset>
-            <legend>DIVE Anlagenzertifikat</legend>
-            <p>✅️ Art der Anlage: {claim["Art der Anlage"]}</p>
-            <p>✅️ Nennleistung (kW): {claim["Nennleistung (kW)"]}</p>
-            <p>✅️ Standort: {claim["Standort"]}</p>
-            {credential && (
-              <p>
-                ✅️ Zertifikat beglaubigt
-                <button
-                  type="button"
-                  onClick={handleShowCredentialClick}
-                  id="credential"
-                >
-                  🔍️
-                </button>
-              </p>
-            )}
-            <dialog ref={credentialDialogRef}>
-              <a
-                href="https://polkadot.js.org/apps/#/chainstate"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Polkadot
-              </a>
-              <form method="dialog">
-                <button type="submit">✖️</button>
-              </form>
-              <ReactJson src={credential} />
-            </dialog>
-            {!credential && <p>💡️ Zertifikat in Bearbeitung</p>}
-          </fieldset>
-        )}
-        {!claim && (
-          <form onSubmit={handleClaimSubmit}>
-            <fieldset>
-              <legend>DIVE Anlagenzertifikat</legend>
-              <p>
-                <label>
-                  Art der Anlage: <input name="Art der Anlage" required />
-                </label>
-              </p>
-              <p>
-                <label>
-                  Nennleistung (kW):{" "}
-                  <input name="Nennleistung (kW)" required type="number" />
-                </label>
-              </p>
-              <p>
-                <label>
-                  Standort: <input name="Standort" required />
-                </label>
-              </p>
-              <button type="submit">Anfordern</button>
-            </fieldset>
-          </form>
-        )}
+        {claim &&
+          (mode === Mode.presentation ? (
+            <PresentationCredentialSection
+              credentials={credential}
+              claim={claim}
+            />
+          ) : (
+            <ProductionCredentialSection
+              credentials={credential}
+              claim={claim}
+            />
+          ))}
+        {!claim &&
+          (mode === Mode.presentation ? (
+            <form onSubmit={handleClaimSubmit}>
+              <PresentationClaimSection hasDid={!boxDid} />
+            </form>
+          ) : (
+            <form onSubmit={handleClaimSubmit}>
+              <ProductionClaimSection hasDid={!boxDid} />
+            </form>
+          ))}
 
         <form onSubmit={handleSelfCredential}>
           <fieldset>

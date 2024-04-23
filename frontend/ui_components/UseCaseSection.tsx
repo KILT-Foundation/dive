@@ -1,6 +1,7 @@
 import { SetStateAction, useCallback, useEffect, useState } from "react";
 import { getActiveUseCase, postUseCaseParticipation } from "../api/backend";
 import { UseCaseConfig } from "../types";
+import { Mode } from "../App";
 
 const RawUseCases = [
   {
@@ -30,7 +31,7 @@ const RawUseCases = [
   },
 ];
 
-function UseCaseComponent() {
+function UseCaseComponent({ mode }: { mode: Mode }) {
   // states
   const [option, setOption] = useState<string>();
   const [activeUseCase, setActiveUseCase] = useState<string>();
@@ -110,7 +111,7 @@ function UseCaseComponent() {
       useCaseUrl: url,
     };
 
-    const activeUseCase = await postUseCaseParticipation(config);
+    const activeUseCase = await postUseCaseParticipation(config, mode);
     updateActiveUserCase(activeUseCase);
 
     setIsSignUpValid(false);
@@ -131,7 +132,7 @@ function UseCaseComponent() {
       useCaseUrl: "http://localhost:8000",
     };
 
-    const activeUseCase = await postUseCaseParticipation(invalidConfig);
+    const activeUseCase = await postUseCaseParticipation(invalidConfig, mode);
     updateActiveUserCase(activeUseCase);
 
     setIsSignUpInvalid(false);
@@ -152,7 +153,10 @@ function UseCaseComponent() {
       useCaseUrl: "",
     };
 
-    const activeUseCase = await postUseCaseParticipation(deregisterConfig);
+    const activeUseCase = await postUseCaseParticipation(
+      deregisterConfig,
+      mode
+    );
     updateActiveUserCase(activeUseCase);
 
     clearInterval(interval);
