@@ -1,7 +1,7 @@
 use std::{fs, io, path::Path, str::FromStr};
 use subxt::ext::sp_core::crypto::Ss58Codec;
 
- use crate::{
+use crate::{
     device::{
         crypto::get_random_bytes,
         error::DeviceError,
@@ -9,6 +9,7 @@ use subxt::ext::sp_core::crypto::Ss58Codec;
     },
     dto::Credential,
     kilt::did_helper::{ADDRESS_FORMAT, DID_PREFIX},
+    routes::Mode,
 };
 
 const KEY_FILE_PATH: &str = "./keys.json";
