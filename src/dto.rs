@@ -50,3 +50,16 @@ pub struct TxResponse {
 pub struct PayerAddress {
     pub address: String,
 }
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UseCaseRegistrationBody {
+    pub did_url: String,
+    pub presentation: Credential,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UseCaseResponse {
+    pub use_case: String,
+}

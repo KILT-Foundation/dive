@@ -20,6 +20,7 @@ use anyhow::Context;
 use clap::Parser;
 use routes::{
     get_challenge_scope, get_claim_scope, get_credential_scope, get_did_scope, get_payment_scope,
+    get_use_case_scope,
 };
 use sodiumoxide::crypto::box_::SecretKey;
 use std::sync::Arc;
@@ -44,6 +45,9 @@ use crate::{
     },
     routes::get_well_known_did_config_scope,
 };
+
+const SERVICE_ENDPOINT_TYPE: &'static str = "KiltPublishedCredentialCollectionV1Type";
+const USE_CASE_SERVICE_ENDPOINT_ID: &'static str = "dive";
 
 #[derive(Clone)]
 pub struct AppState {
@@ -74,6 +78,10 @@ pub struct AppState {
     pub signer: Arc<PairSigner<KiltConfig, Pair>>,
     // Did for creating credentials
     pub did_attester: AccountId32,
+    /// Type for service Endpoint
+    pub kilt_service_endpoint_type: String,
+    ///Service Endpoint ID for use case participation
+    pub use_case_service_endpoint_id: String,
 }
 
 pub async fn run(
@@ -128,6 +136,8 @@ pub async fn run(
         session_encryption_public_key_uri,
         secret_key,
         did_attester,
+        kilt_service_endpoint_type: String::from(SERVICE_ENDPOINT_TYPE),
+        use_case_service_endpoint_id: String::from(USE_CASE_SERVICE_ENDPOINT_ID),
     };
 
     // if a thread receives a poisoned lock we panic the main thread.
@@ -161,6 +171,8 @@ pub async fn run(
             .service(get_well_known_did_config_scope())
             //Challenge
             .service(get_challenge_scope())
+            //Use case routes
+            .service(get_use_case_scope())
             // Frontend
             .service(fs::Files::new("/", &source_dir).index_file("index.html"))
     })

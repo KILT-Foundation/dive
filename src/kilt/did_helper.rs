@@ -2,13 +2,15 @@ use base58::FromBase58;
 use serde_with::{serde_as, Bytes};
 use sodiumoxide::crypto::box_;
 use std::str::FromStr;
-use subxt::OnlineClient;
+use subxt::{ext::sp_core::crypto::Ss58Codec, tx::Signer, OnlineClient};
 
 use crate::kilt::{
     error::{CredentialAPIError, DidError, TxError},
     runtime::{
         self, runtime_types,
+        runtime_types::bounded_collections::bounded_vec::BoundedVec,
         runtime_types::did::did_details::{DidDetails, DidEncryptionKey, DidPublicKey},
+        runtime_types::did::service_endpoints::DidEndpoint,
         storage,
     },
     KiltConfig,
@@ -96,6 +98,26 @@ pub async fn get_did_doc(
     Ok(details)
 }
 
+pub async fn get_did_service_endpoint(
+    did: &str,
+    service_endpoint_id: &str,
+    cli: &OnlineClient<KiltConfig>,
+) -> Result<Option<DidEndpoint>, CredentialAPIError> {
+    let id = BoundedVec(service_endpoint_id.into());
+    let did = subxt::utils::AccountId32::from_str(did.trim_start_matches("did:kilt:"))
+        .map_err(|_| CredentialAPIError::Did("Invalid DID"))?;
+    let service_endpoint_key = runtime::storage().did().service_endpoints(&did, id);
+
+    let did_endpoint = cli
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&service_endpoint_key)
+        .await?;
+
+    Ok(did_endpoint)
+}
+
 fn parse_key_uri(key_uri: &str) -> Result<(&str, sp_core::H256), CredentialAPIError> {
     let key_uri_parts: Vec<&str> = key_uri.split('#').collect();
     if key_uri_parts.len() != 2 {
@@ -131,4 +153,13 @@ pub async fn get_encryption_key_from_fulldid_key_uri(
         return Err(CredentialAPIError::Did("Invalid sender public key"));
     };
     box_::PublicKey::from_slice(&pk).ok_or(CredentialAPIError::Did("Invalid sender public key"))
+}
+
+pub fn get_did_address(keys: impl Signer<KiltConfig>) -> String {
+    format!(
+        "{}{}",
+        DID_PREFIX,
+        keys.account_id()
+            .to_ss58check_with_version(ADDRESS_FORMAT.into())
+    )
 }

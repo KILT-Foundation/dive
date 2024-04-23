@@ -3,7 +3,7 @@ use std::io::ErrorKind;
 
 use crate::{
     device::DeviceError,
-    kilt::error::{CredentialAPIError, DidError, TxError},
+    kilt::error::{CredentialAPIError, DidError, TxError, UseCaseAPIError},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -30,6 +30,8 @@ pub enum ServerError {
     ActixWeb(#[from] actix_web::Error),
     #[error("Credential API error: {0}")]
     CredentialAPI(#[from] CredentialAPIError),
+    #[error("Use case API error: {0}")]
+    UseCaseAPI(#[from] UseCaseAPIError),
 }
 
 impl ResponseError for DeviceError {
@@ -97,6 +99,22 @@ impl ResponseError for CredentialAPIError {
     }
 }
 
+impl ResponseError for UseCaseAPIError {
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        if self.status_code() != StatusCode::INTERNAL_SERVER_ERROR {
+            log::error!("{}", self.to_string());
+        }
+        HttpResponse::build(self.status_code()).body(self.to_string())
+    }
+
+    fn status_code(&self) -> StatusCode {
+        match self {
+            UseCaseAPIError::NotFound => StatusCode::NOT_FOUND,
+            UseCaseAPIError::Format => StatusCode::BAD_REQUEST,
+        }
+    }
+}
+
 impl ResponseError for ServerError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
         match self {
@@ -115,6 +133,7 @@ impl ResponseError for ServerError {
             ServerError::Device(e) => e.status_code(),
             ServerError::Tx(e) => e.status_code(),
             ServerError::CredentialAPI(e) => e.status_code(),
+            ServerError::UseCaseAPI(e) => e.status_code(),
             ServerError::Json(..) | ServerError::Hex(..) => StatusCode::BAD_REQUEST,
             ServerError::HttpClient(..)
             | ServerError::HttpClientHeader(..)

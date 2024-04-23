@@ -43,3 +43,11 @@ pub enum CredentialAPIError {
     #[error("Subxt error: {0}")]
     Subxt(#[from] subxt::Error),
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum UseCaseAPIError {
+    #[error("Use case not found")]
+    NotFound,
+    #[error("Format Error")]
+    Format,
+}

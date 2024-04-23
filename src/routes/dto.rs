@@ -70,3 +70,12 @@ pub struct RequestAttestationMessageContent {
     pub credential: Credential,
     pub quote: Option<serde_json::Value>,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UseCaseParticipationMessage {
+    pub use_case_did_url: String,
+    pub use_case_url: String,
+    pub update_service_endpoint: bool,
+    pub notify_use_case: bool,
+}

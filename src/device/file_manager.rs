@@ -1,7 +1,7 @@
 use std::{fs, io, path::Path, str::FromStr};
 use subxt::ext::sp_core::crypto::Ss58Codec;
 
-use crate::{
+ use crate::{
     device::{
         crypto::get_random_bytes,
         error::DeviceError,
@@ -12,7 +12,8 @@ use crate::{
 };
 
 const KEY_FILE_PATH: &str = "./keys.json";
-const BASE_CLAIM_PATH: &str = "./base_claim.json";
+pub const BASE_CLAIM_PRODUCTION_PATH: &str = "./base_claim_production.json";
+pub const BASE_CLAIM_PRESENTATION_PATH: &str = "./base_claim_presentation.json";
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -108,15 +109,25 @@ pub fn reset_did_keys() -> Result<PairKeyManager, DeviceError> {
     }
 }
 
+fn get_claim_path(mode: Mode) -> &'static str {
+    if mode == Mode::Presentation {
+        BASE_CLAIM_PRESENTATION_PATH
+    } else {
+        BASE_CLAIM_PRODUCTION_PATH
+    }
+}
+
 /// Reads the content in [BASE_CLAIM_PATH]
-pub fn get_claim_content() -> Result<Credential, DeviceError> {
-    let base_claim = std::fs::read_to_string(BASE_CLAIM_PATH)?;
+pub fn get_claim_content(mode: Mode) -> Result<Credential, DeviceError> {
+    let base_claim_path = get_claim_path(mode);
+    let base_claim = std::fs::read_to_string(base_claim_path)?;
     let claim: Credential = serde_json::from_str(&base_claim)?;
     Ok(claim)
 }
 
 /// saves the credential in [BASE_CLAIM_PATH]
-pub fn save_claim_content(content: &Credential) -> Result<(), DeviceError> {
+pub fn save_claim_content(content: &Credential, mode: Mode) -> Result<(), DeviceError> {
+    let base_claim_path = get_claim_path(mode);
     let string_content = serde_json::to_string(content)?;
-    std::fs::write(BASE_CLAIM_PATH, &string_content).map_err(DeviceError::from)
+    std::fs::write(base_claim_path, &string_content).map_err(DeviceError::from)
 }
