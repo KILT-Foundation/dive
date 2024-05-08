@@ -7,27 +7,27 @@ const RawUseCases = [
   {
     name: "Energy Web Green Proofs",
     did: "did:web:dive-greenproofs.energywebx.com",
-    url: "http://greenproofs.dive.energyweb.org",
+    url: "https://greenproofs.dive.energyweb.org",
   },
   {
     name: "Track & Trace (via Energy Web)",
     did: "did:web:dive-ett-proxy.energywebx.com",
-    url: "http://greenproofs.dive.energyweb.org",
+    url: "https://greenproofs.dive.energyweb.org",
   },
   {
     name: "Energy Web Flex",
     did: "did:web:dive-flex.energywebx.com",
-    url: "http://greenproofs.dive.energyweb.org",
+    url: "https://greenproofs.dive.energyweb.org",
   },
   {
     name: "Energy Web Green Proofs",
     did: "did:web:dive-ev-supplier-switch.energywebx.com",
-    url: "http://greenproofs.dive.energyweb.org",
+    url: "https://greenproofs.dive.energyweb.org",
   },
   {
     name: "Example",
     did: "did:web:example.com",
-    url: "http://greenproofs.dive.energyweb.org",
+    url: "https://greenproofs.dive.energyweb.org",
   },
 ];
 

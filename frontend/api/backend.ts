@@ -8,7 +8,7 @@ import type {
 } from "@kiltprotocol/types";
 import { AttestationResponse, UseCaseConfig, UseCaseResponse } from "../types";
 
-export const API_URL = "http://localhost:3333/api/v1";
+export const API_URL = window.location.origin + "/api/v1";
 
 export async function getPaymentAddress() {
   try {
