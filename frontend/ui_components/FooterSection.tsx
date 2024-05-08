@@ -12,7 +12,7 @@ function Footer() {
       return;
     }
     (async () => {
-      await ky.delete(API_URL + "/did");
+      await ky.delete(API_URL + "/api/v1/did");
       window.location.reload();
     })();
   }, []);

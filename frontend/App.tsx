@@ -61,7 +61,7 @@ export function App() {
       setBoxDidPending(true);
 
       let data = await ky
-        .post(`${API_URL}/did`, { timeout: false })
+        .post(`${API_URL}/api/v1/did`, { timeout: false })
         .json<{ did: DidUri }>();
 
       setBoxDid(data.did);
@@ -96,7 +96,7 @@ export function App() {
           setProgress((old) => old + 1);
         }, 1000);
 
-        await ky.post(`${API_URL}/payment`, {
+        await ky.post(`${API_URL}/api/v1/payment`, {
           json: signedExtrinsic,
           timeout: false,
         });
@@ -120,7 +120,7 @@ export function App() {
     } else {
       localStorageHandler.setMode(Mode.production);
     }
-    await ky.delete(API_URL + "/did");
+    await ky.delete(API_URL + "/api/v1/did");
     window.location.reload();
   };
 
