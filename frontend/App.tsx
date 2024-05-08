@@ -2,7 +2,12 @@ import { type FormEvent, useCallback, useState, useEffect } from "react";
 import ky from "ky";
 import type { DidUri, KiltAddress } from "@kiltprotocol/types";
 
-import { getExistingDid, getPaymentAddress, API_URL } from "./api/backend";
+import {
+  getExistingDid,
+  getPaymentAddress,
+  API_URL,
+  postUrl,
+} from "./api/backend";
 import Footer from "./ui_components/FooterSection";
 import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
@@ -37,6 +42,8 @@ export function App() {
     getPaymentAddress()
       .then((address) => setAddress(address))
       .catch((e) => setError(error + "\n" + e.toString()));
+
+    postUrl().catch((e) => setError(error + "\n" + e.toString()));
 
     let mode = localStorageHandler.getMode();
     setMode(mode);

@@ -180,6 +180,14 @@ fn hex_decode(data: &str) -> Result<Vec<u8>, hex::FromHexError> {
     hex::decode(data.trim_start_matches("0x"))
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WellKnownDidConfigData {
+    pub did: String,
+    pub key_uri: String,
+    pub origin: String,
+    pub seed: String,
+}
+
 pub fn create_well_known_did_config(
     did: &str,
     key_uri: &str,
