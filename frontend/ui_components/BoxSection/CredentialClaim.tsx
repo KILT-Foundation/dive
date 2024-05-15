@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import ReactJson from "react-json-view";
 import { Mode } from "../../App";
 import { presentationCtype, productionCtype } from "../../ctypes";
+import { AttestationResponse } from '../../types';
 
 const productionEntries = [
   "Vorname",
@@ -298,7 +299,7 @@ export function ProductionCredentialSection({ credentials, claim }) {
 
 function CredentialSection({ credentials, claim, entries, mode }) {
   const credentialDialogRef = useRef<HTMLDialogElement>();
-  const [credential, setCredential] = useState(undefined);
+  const [credential, setCredential] = useState<AttestationResponse>(undefined);
 
   useEffect(() => {
     const targetCtype =
@@ -348,6 +349,16 @@ function CredentialSection({ credentials, claim, entries, mode }) {
         </form>
         <ReactJson src={credential ? credential.credential : []} />
       </dialog>
+
+      {credential && (
+        <Fragment>
+          <p>Status: {credential.revoked ? 'Widerrufen' : 'Beglaubigt'}</p>
+          <p>Attester: {credential.credential}</p>
+          <p>Credential hash: {credential.credential.rootHash}</p>
+          <p>CType: {credential.credential.claim.cTypeHash}</p>
+        </Fragment>
+      )}
+
       {!credential && <p>💡️ Zertifikat in Bearbeitung</p>}
     </fieldset>
   );
