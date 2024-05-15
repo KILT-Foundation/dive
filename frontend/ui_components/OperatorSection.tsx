@@ -45,7 +45,7 @@ const OperatorComponent = ({
         <Fragment>
           {Object.entries(extensions).length === 0 && (
             <p>
-              ❌️ KILT Wallet nicht vorhanden, bitte installieren
+              ❌️ KILT Wallet nicht vorhanden, bitte installieren{' '}
               <a
                 href="https://www.sporran.org/"
                 target="_blank"

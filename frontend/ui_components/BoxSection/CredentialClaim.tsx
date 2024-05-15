@@ -319,7 +319,7 @@ function CredentialSection({ credentials, claim, entries, mode }) {
       <legend>DIVE Anlagenzertifikat</legend>
       {entries.map((key) => (
         <p key={key}>
-          {key in claim && "✅️"}
+          {key in claim && "✅️ "}
           {key}: {claim[key]}
         </p>
       ))}
