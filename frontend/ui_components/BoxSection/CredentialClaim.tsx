@@ -353,7 +353,6 @@ function CredentialSection({ credentials, claim, entries, mode }) {
       {credential && (
         <Fragment>
           <p>Status: {credential.revoked ? 'Widerrufen' : 'Beglaubigt'}</p>
-          <p>Attester: {credential.credential}</p>
           <p>Credential hash: {credential.credential.rootHash}</p>
           <p>CType: {credential.credential.claim.cTypeHash}</p>
         </Fragment>
