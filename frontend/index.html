@@ -40,12 +40,29 @@
       border-radius: 1rem;
     }
 
-    .box h3 {
-      margin-top: 0;
+    .box header {
       background: #798e84;
-      padding-block: 0.25rem;
-      padding-inline: 0.5rem;
-      font-size: 1rem;
+      margin-top: 0;
+      padding-inline: .5rem;
+
+      input[type=radio] {
+        display: none
+      }
+
+      label {
+        display: inline-block;
+        margin-block-start: -4px;
+        margin-inline: 1rem;
+        padding-block: .25rem;
+        padding-inline: .5rem;
+        font-size: 1rem;
+        cursor: pointer;
+
+        &:has(input:checked) {
+          background-color: #fff;
+          color: #798e84;
+        }
+      }
     }
 
     .box p {
@@ -61,7 +78,7 @@
       border-radius: 0.5rem;
     }
 
-    label {
+    fieldset label {
       display: flex;
       width: 23rem;
       justify-content: space-between;

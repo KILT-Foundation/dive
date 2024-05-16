@@ -1,19 +1,12 @@
 import { Claim, Credential } from "@kiltprotocol/core";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
 import {
   productionCtype,
   presentationCtype,
-  selfIssuedCtype,
 } from "../../ctypes";
 import { getClaim, getCredential, postClaim } from "../../api/backend";
-import {
-  InjectedWindowProvider,
-  getExtensions,
-} from "@kiltprotocol/kilt-extension-api";
-import { getSession } from "../../api/session";
-import { fetchCredential } from "../../api/credential";
 
 import {
   PresentationClaimSection,
@@ -30,7 +23,6 @@ function BoxComponent({
   ownerDidPending,
   progress,
   mode,
-  handleModeSwitch,
 }: {
   boxDid: DidUri;
   boxDidPending: boolean;
@@ -38,7 +30,6 @@ function BoxComponent({
   ownerDidPending: boolean;
   progress: number;
   mode: Mode;
-  handleModeSwitch: () => void;
 }) {
   // states
   const [claim, setClaim] = useState(undefined);
@@ -92,41 +83,11 @@ function BoxComponent({
     [boxDid, mode]
   );
 
-  const handleSelfCredential = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      const formData = new FormData(event.currentTarget);
-      const claimContent = Object.fromEntries(formData.entries());
-
-      const extensions = getExtensions();
-      const extensionName = "Sporran";
-      const extension: InjectedWindowProvider = extensions.find(
-        (val) => val.name === extensionName
-      );
-
-      const dids = await extension.getDidList();
-
-      const owner = dids[0].did;
-
-      const claim = Claim.fromCTypeAndClaimContents(
-        selfIssuedCtype,
-        claimContent as IClaimContents,
-        owner
-      );
-
-      let session = await getSession(extension);
-      await fetchCredential(session, claim);
-    },
-    []
-  );
-
   return (
     <section>
-      <h1>OLI Box</h1>
       {error !== "" && error}
 
-      <section className="box">
-        <h3>Anlage</h3>
+      <>
         {boxDid && <p>✅️ Identität: {boxDid}</p>}
         {!boxDid && (
           <p>
@@ -144,9 +105,6 @@ function BoxComponent({
             {boxDidPending && <progress max={60} value={progress} />}
           </p>
         )}
-        <button style={{ margin: "10px" }} onClick={handleModeSwitch}>
-          {mode}
-        </button>
 
         {claim &&
           (mode === Mode.presentation ? (
@@ -170,24 +128,7 @@ function BoxComponent({
               <ProductionClaimSection hasDid={!boxDid} />
             </form>
           ))}
-
-        <form onSubmit={handleSelfCredential}>
-          <fieldset>
-            <legend>Selbstauskunftszertifikat</legend>
-            <p>
-              <label>
-                Name: <input name="name" required />
-              </label>
-            </p>
-            <p>
-              <label>
-                Adresse: <input name="address" required />
-              </label>
-            </p>
-            <button type="submit">Anfordern</button>
-          </fieldset>
-        </form>
-      </section>
+      </>
     </section>
   );
 }

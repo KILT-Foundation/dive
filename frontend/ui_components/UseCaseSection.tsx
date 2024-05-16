@@ -163,8 +163,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
   const isServerBlocked = isDeregister || isSignUpInvalid || isSignUpValid;
 
   return (
-    <section className="box">
-      <h3>Use Case</h3>
+    <>
       {error !== "" && error}
       <fieldset>
         <legend>Aktueller Use Case</legend>
@@ -259,7 +258,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
           Hinzufügen
         </button>
       </fieldset>
-    </section>
+    </>
   );
 }
 
