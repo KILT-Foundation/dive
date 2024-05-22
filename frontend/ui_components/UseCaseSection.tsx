@@ -39,6 +39,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
   const [customUseCase, setCustomUseCase] = useState<string>("");
   const [progress, setProgress] = useState(0);
   const [isDeregister, setIsDeregister] = useState(false);
+  const [isAccepted, setIsAccepted] = useState(false);
   const [isSignUpValid, setIsSignUpValid] = useState(false);
   const [isSignUpInvalid, setIsSignUpInvalid] = useState(false);
   const [useCases, setUseCases] = useState(RawUseCases);
@@ -118,6 +119,10 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
     clearInterval(interval);
   }, [option]);
 
+  const handleApproveTermsAndConditions = useCallback(() => {
+    setIsAccepted(!isAccepted);
+  }, [isAccepted]);
+
   const handleSubmitUseCaseSelectionInvalidValue = useCallback(async () => {
     setProgress(0);
     setIsSignUpInvalid(true);
@@ -163,8 +168,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
   const isServerBlocked = isDeregister || isSignUpInvalid || isSignUpValid;
 
   return (
-    <section className="box">
-      <h3>Use Case</h3>
+    <>
       {error !== "" && error}
       <fieldset>
         <legend>Aktueller Use Case</legend>
@@ -209,7 +213,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
             then calls the use case api to register the device for participation */}
         <button
           type="submit"
-          disabled={isServerBlocked}
+          disabled={isServerBlocked || !isAccepted}
           onClick={handleSubmitUseCaseSelection}
           title="Bei der regulären Anmeldung wird der 'Konflikt-Token' vor der Anmeldung aktualisiert. Dies entspricht einer Abmeldung beim vorherigen Use Case und vermeidet daher mehrere, glechzeitige Use Case Teilnahmen."
         >
@@ -227,7 +231,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
         {/* calls the user case api to register the device for participation without updating the DIVE conflict token (for demo purpose; will lead to an error) */}
         <button
           type="submit"
-          disabled={isServerBlocked}
+          disabled={isServerBlocked || !isAccepted}
           onClick={handleSubmitUseCaseSelectionInvalidValue}
           title="Die Anmeldung ohne vorherige Abmeldung dient nur zur Demonstration der Funktionsweise der Konfliktvermeidung. Die Anmeldung am Use Case wird fehlschlagen. Die Anlage wird folglich nicht tatsächlich beim Use Case angemeldet."
         >
@@ -236,6 +240,24 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
         {isSignUpInvalid && (
           <progress max={90} style={{ marginLeft: "1em" }} value={progress} />
         )}
+        <div
+          style={{
+            marginTop: "1rem",
+            display: "flex",
+            flexDirection: "row",
+            fontSize: "0.8rem",
+          }}
+        >
+          <input
+            type="checkbox"
+            id="acceptTermsAndConditions"
+            onClick={handleApproveTermsAndConditions}
+            checked={isAccepted}
+          />
+          <label htmlFor="acceptTermsAndConditions">
+            Ich stimme den AGB und der Datenschutzerklärung zu{" "}
+          </label>
+        </div>
       </fieldset>
       <fieldset>
         <legend>Bekanntmachen</legend>
@@ -259,7 +281,7 @@ function UseCaseComponent({ mode }: { mode: Mode }) {
           Hinzufügen
         </button>
       </fieldset>
-    </section>
+    </>
   );
 }
 

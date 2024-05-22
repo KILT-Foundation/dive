@@ -1,5 +1,13 @@
-import { FormEvent, Fragment, useEffect, useState } from "react";
-import type { DidUri, KiltAddress } from "@kiltprotocol/types";
+import { FormEvent, Fragment, useCallback, useEffect, useState } from "react";
+import type { DidUri, IClaimContents, KiltAddress } from "@kiltprotocol/types";
+import {
+  getExtensions,
+  type InjectedWindowProvider,
+} from "@kiltprotocol/kilt-extension-api";
+import { Claim } from "@kiltprotocol/core";
+import { selfIssuedCtype } from "../ctypes";
+import { getSession } from "../api/session";
+import { fetchCredential } from "../api/credential";
 
 const OperatorComponent = ({
   address,
@@ -26,6 +34,34 @@ const OperatorComponent = ({
 }) => {
   const [extensions, setExtensions] = useState(window.kilt);
 
+  const handleSelfCredential = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const claimContent = Object.fromEntries(formData.entries());
+
+      const extensions = getExtensions();
+      const extensionName = "Sporran";
+      const extension: InjectedWindowProvider = extensions.find(
+        (val) => val.name === extensionName
+      );
+
+      const dids = await extension.getDidList();
+
+      const owner = dids[0].did;
+
+      const claim = Claim.fromCTypeAndClaimContents(
+        selfIssuedCtype,
+        claimContent as IClaimContents,
+        owner
+      );
+
+      let session = await getSession(extension);
+      await fetchCredential(session, claim);
+    },
+    []
+  );
+
   // useEffects
   useEffect(() => {
     function initialize() {
@@ -39,13 +75,12 @@ const OperatorComponent = ({
   }, []);
 
   return (
-    <section className="box">
-      <h3>Betreiber</h3>
+    <>
       {address && (
         <Fragment>
           {Object.entries(extensions).length === 0 && (
             <p>
-              ❌️ KILT Wallet nicht vorhanden, bitte installieren
+              ❌️ KILT Wallet nicht vorhanden, bitte installieren{" "}
               <a
                 href="https://www.sporran.org/"
                 target="_blank"
@@ -110,9 +145,26 @@ const OperatorComponent = ({
               ))}
             </ul>
           )}
+
+          <form onSubmit={handleSelfCredential}>
+            <fieldset>
+              <legend>Selbstauskunftszertifikat</legend>
+              <p>
+                <label>
+                  Name: <input name="name" required />
+                </label>
+              </p>
+              <p>
+                <label>
+                  Adresse: <input name="address" required />
+                </label>
+              </p>
+              <button type="submit">Anfordern</button>
+            </fieldset>
+          </form>
         </Fragment>
       )}
-    </section>
+    </>
   );
 };
 
