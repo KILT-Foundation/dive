@@ -7,7 +7,7 @@ import Footer from "./ui_components/FooterSection";
 import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
 import UseCaseComponent from "./ui_components/UseCaseSection";
-import { AdminComponent } from './ui_components/Admin';
+import { AdminComponent } from "./ui_components/Admin";
 import * as localStorageHandler from "./api/localStorage";
 
 export enum Mode {
@@ -28,7 +28,7 @@ export function App() {
     Array<{ did: DidUri; name?: string }>
   >([]);
 
-  const [tab, setTab] = useState<string>('Anlage');
+  const [tab, setTab] = useState<string>("Anlage");
   const onTabChange = useCallback(({ target }) => {
     setTab((target as HTMLInputElement).value);
   }, []);
@@ -143,26 +143,46 @@ export function App() {
       <section className="box">
         <header onChange={onTabChange}>
           <label>
-            <input type="radio" name="tab" value="Anlage" checked/>
+            <input
+              type="radio"
+              name="tab"
+              value="Anlage"
+              checked={tab === "Anlage"}
+            />
             Anlage
           </label>
           <label>
-            <input type="radio" name="tab" value="Betreiber"/>
+            <input
+              type="radio"
+              name="tab"
+              value="Betreiber"
+              checked={tab === "Betreiber"}
+            />
             Betreiber
           </label>
           <label>
-            <input type="radio" name="tab" value="Use Case"/>
+            <input
+              type="radio"
+              name="tab"
+              value="Use Case"
+              checked={tab === "Use Case"}
+            />
             Use Case
           </label>
           <label>
-            <input type="radio" name="tab" value="Admin"/>
+            <input
+              type="radio"
+              name="tab"
+              value="Admin"
+              checked={tab === "Admin"}
+            />
             Admin
           </label>
         </header>
 
-        {error !== '' && error}
+        {error !== "" && error}
 
-        {tab === 'Anlage' && (
+        {tab === "Anlage" && (
           <BoxComponent
             boxDid={boxDid}
             boxDidPending={boxDidPending}
@@ -172,7 +192,7 @@ export function App() {
             mode={mode}
           />
         )}
-        {tab === 'Betreiber' && (
+        {tab === "Betreiber" && (
           <OperatorComponent
             address={address}
             ownerDidPending={ownerDidPending}
@@ -184,17 +204,12 @@ export function App() {
             handleGetOwnerDIDsClick={handleGetOwnerDIDsClick}
           />
         )}
-        {tab === 'Use Case' && (
-          <UseCaseComponent mode={mode}/>
-        )}
-        {tab === 'Admin' && (
-          <AdminComponent
-            mode={mode}
-            handleModeSwitch={handleModeSwitch}
-          />
+        {tab === "Use Case" && <UseCaseComponent mode={mode} />}
+        {tab === "Admin" && (
+          <AdminComponent mode={mode} handleModeSwitch={handleModeSwitch} />
         )}
       </section>
-      <Footer/>
+      <Footer />
     </>
   );
 }

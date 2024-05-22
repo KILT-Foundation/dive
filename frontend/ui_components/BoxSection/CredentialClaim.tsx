@@ -1,8 +1,8 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import ReactJson from "react-json-view";
 import { Mode } from "../../App";
 import { presentationCtype, productionCtype } from "../../ctypes";
-import { AttestationResponse } from '../../types';
+import { AttestationResponse } from "../../types";
 
 const productionEntries = [
   "Vorname",
@@ -352,7 +352,7 @@ function CredentialSection({ credentials, claim, entries, mode }) {
 
       {credential && (
         <Fragment>
-          <p>Status: {credential.revoked ? 'Widerrufen' : 'Beglaubigt'}</p>
+          <p>Status: {credential.revoked ? "Widerrufen" : "Beglaubigt"}</p>
           <p>Credential hash: {credential.credential.rootHash}</p>
           <p>CType: {credential.credential.claim.cTypeHash}</p>
         </Fragment>

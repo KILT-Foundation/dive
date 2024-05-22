@@ -1,10 +1,13 @@
-import { FormEvent, Fragment, useCallback, useEffect, useState } from 'react';
-import type { DidUri, IClaimContents, KiltAddress} from '@kiltprotocol/types';
-import { getExtensions, type InjectedWindowProvider } from '@kiltprotocol/kilt-extension-api';
-import { Claim } from '@kiltprotocol/core';
-import { selfIssuedCtype } from '../ctypes';
-import { getSession } from '../api/session';
-import { fetchCredential } from '../api/credential';
+import { FormEvent, Fragment, useCallback, useEffect, useState } from "react";
+import type { DidUri, IClaimContents, KiltAddress } from "@kiltprotocol/types";
+import {
+  getExtensions,
+  type InjectedWindowProvider,
+} from "@kiltprotocol/kilt-extension-api";
+import { Claim } from "@kiltprotocol/core";
+import { selfIssuedCtype } from "../ctypes";
+import { getSession } from "../api/session";
+import { fetchCredential } from "../api/credential";
 
 const OperatorComponent = ({
   address,
@@ -77,7 +80,7 @@ const OperatorComponent = ({
         <Fragment>
           {Object.entries(extensions).length === 0 && (
             <p>
-              ❌️ KILT Wallet nicht vorhanden, bitte installieren{' '}
+              ❌️ KILT Wallet nicht vorhanden, bitte installieren{" "}
               <a
                 href="https://www.sporran.org/"
                 target="_blank"
@@ -92,7 +95,7 @@ const OperatorComponent = ({
           {!ownerDidPending && (
             <p>
               {Object.entries(extensions).map(
-                ([key, {name, getSignedDidCreationExtrinsic}]) =>
+                ([key, { name, getSignedDidCreationExtrinsic }]) =>
                   getSignedDidCreationExtrinsic && (
                     <button
                       type="button"
@@ -110,14 +113,14 @@ const OperatorComponent = ({
 
           {ownerDidPending && (
             <p>
-              <progress max={40} value={progress}/>
+              <progress max={40} value={progress} />
             </p>
           )}
 
           {ownerDIDReady && (
             <p>
               {Object.entries(extensions).map(
-                ([key, {name, getDidList}]) =>
+                ([key, { name, getDidList }]) =>
                   getDidList && (
                     <button
                       type="button"
@@ -135,7 +138,7 @@ const OperatorComponent = ({
 
           {ownerDIDs.length > 0 && (
             <ul>
-              {ownerDIDs.map(({did, name}) => (
+              {ownerDIDs.map(({ did, name }) => (
                 <li key={did}>
                   {did} {name && `(${name})`}
                 </li>
@@ -148,12 +151,12 @@ const OperatorComponent = ({
               <legend>Selbstauskunftszertifikat</legend>
               <p>
                 <label>
-                  Name: <input name="name" required/>
+                  Name: <input name="name" required />
                 </label>
               </p>
               <p>
                 <label>
-                  Adresse: <input name="address" required/>
+                  Adresse: <input name="address" required />
                 </label>
               </p>
               <button type="submit">Anfordern</button>

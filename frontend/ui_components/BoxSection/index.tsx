@@ -2,10 +2,7 @@ import { Claim, Credential } from "@kiltprotocol/core";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
-import {
-  productionCtype,
-  presentationCtype,
-} from "../../ctypes";
+import { productionCtype, presentationCtype } from "../../ctypes";
 import { getClaim, getCredential, postClaim } from "../../api/backend";
 
 import {
