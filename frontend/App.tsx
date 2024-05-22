@@ -2,7 +2,12 @@ import { type FormEvent, useCallback, useState, useEffect } from "react";
 import ky from "ky";
 import type { DidUri, KiltAddress } from "@kiltprotocol/types";
 
-import { getExistingDid, getPaymentAddress, API_URL } from "./api/backend";
+import {
+  getExistingDid,
+  getPaymentAddress,
+  API_URL,
+  postUrl,
+} from "./api/backend";
 import Footer from "./ui_components/FooterSection";
 import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
@@ -43,6 +48,8 @@ export function App() {
       .then((address) => setAddress(address))
       .catch((e) => setError(error + "\n" + e.toString()));
 
+    postUrl().catch((e) => setError(error + "\n" + e.toString()));
+
     let mode = localStorageHandler.getMode();
     setMode(mode);
   }, []);
@@ -59,7 +66,7 @@ export function App() {
       setBoxDidPending(true);
 
       let data = await ky
-        .post(`${API_URL}/did`, { timeout: false })
+        .post(`${API_URL}/api/v1/did`, { timeout: false })
         .json<{ did: DidUri }>();
 
       setBoxDid(data.did);
@@ -94,7 +101,7 @@ export function App() {
           setProgress((old) => old + 1);
         }, 1000);
 
-        await ky.post(`${API_URL}/payment`, {
+        await ky.post(`${API_URL}/api/v1/payment`, {
           json: signedExtrinsic,
           timeout: false,
         });
@@ -118,7 +125,7 @@ export function App() {
     } else {
       localStorageHandler.setMode(Mode.production);
     }
-    await ky.delete(API_URL + "/did");
+    await ky.delete(API_URL + "/api/v1/did");
     window.location.reload();
   };
 

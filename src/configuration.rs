@@ -7,10 +7,7 @@ use subxt::{
     utils::AccountId32,
 };
 
-use crate::kilt::{
-    well_known_did_configuration::{create_well_known_did_config, WellKnownDidConfig},
-    KiltConfig,
-};
+use crate::kilt::{well_known_did_configuration::WellKnownDidConfigData, KiltConfig};
 
 #[derive(Deserialize, Debug, Clone, Parser)]
 pub struct Configuration {
@@ -31,8 +28,6 @@ pub struct Configuration {
     #[clap(env)]
     pub well_known_did: String,
     #[clap(env)]
-    pub well_known_origin: String,
-    #[clap(env)]
     pub well_known_key_uri: String,
     #[clap(env)]
     pub well_known_seed: String,
@@ -47,13 +42,13 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    pub fn get_well_known_did_config(&self) -> anyhow::Result<WellKnownDidConfig> {
-        create_well_known_did_config(
-            &self.well_known_did,
-            &self.well_known_key_uri,
-            &self.well_known_origin,
-            &self.well_known_seed,
-        )
+    pub fn get_well_known_did_config_data(&self) -> WellKnownDidConfigData {
+        WellKnownDidConfigData {
+            did: self.well_known_did.clone(),
+            key_uri: self.well_known_key_uri.clone(),
+            origin: String::new(),
+            seed: self.well_known_seed.clone(),
+        }
     }
 
     pub fn get_secret_key(&self) -> anyhow::Result<SecretKey> {

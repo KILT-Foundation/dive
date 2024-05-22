@@ -79,3 +79,8 @@ pub struct UseCaseParticipationMessage {
     pub update_service_endpoint: bool,
     pub notify_use_case: bool,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NewUrl {
+    pub url: String,
+}

@@ -14,8 +14,11 @@ use actix_session::{
     storage::CookieSessionStore,
     SessionMiddleware,
 };
-use actix_web::cookie::Key;
-use actix_web::{cookie::time::Duration, middleware::Logger, web, App, HttpServer};
+use actix_web::{
+    cookie::{time::Duration, Key},
+    middleware::Logger,
+    web, App, HttpServer,
+};
 use anyhow::Context;
 use clap::Parser;
 use routes::{
@@ -40,7 +43,7 @@ use crate::{
     },
     kilt::{
         did_helper::{ADDRESS_FORMAT, DID_PREFIX},
-        well_known_did_configuration::WellKnownDidConfig,
+        well_known_did_configuration::WellKnownDidConfigData,
         KiltConfig,
     },
     routes::get_well_known_did_config_scope,
@@ -66,10 +69,8 @@ pub struct AppState {
     pub did_addr: String,
     // Redirect url needed for OpenDid
     pub redirect_url: String,
-    pub well_known_did_config: WellKnownDidConfig,
     // App name for creating credentials
     pub app_name: String,
-    pub well_known_key_uri: String,
     // Public key
     pub session_encryption_public_key_uri: String,
     // Secret key for encryption. Needed for credential api
@@ -82,6 +83,8 @@ pub struct AppState {
     pub kilt_service_endpoint_type: String,
     ///Service Endpoint ID for use case participation
     pub use_case_service_endpoint_id: String,
+    /// Used data to create the well known did config
+    pub well_known_did_config_data: Arc<Mutex<WellKnownDidConfigData>>,
 }
 
 pub async fn run(
@@ -93,12 +96,11 @@ pub async fn run(
     attester_endpoint: String,
     auth_client_id: String,
     redirect_url: String,
-    well_known_did_config: WellKnownDidConfig,
-    well_known_key_uri: String,
     session_encryption_public_key_uri: String,
     secret_key: SecretKey,
     signer: PairSigner<KiltConfig, Pair>,
     did_attester: AccountId32,
+    well_known_did_config_data: WellKnownDidConfigData,
 ) -> anyhow::Result<()> {
     let payment_signer = key_manager.get_payment_account_signer();
     let payment_account_id = payment_signer.account_id();
@@ -124,6 +126,7 @@ pub async fn run(
         chain_client: Arc::new(api),
         jwt_token: Arc::new(Mutex::new(String::new())),
         signer: Arc::new(signer),
+        well_known_did_config_data: Arc::new(Mutex::new(well_known_did_config_data)),
         app_name: "Olibox".to_string(),
         attester_endpoint,
         auth_client_id,
@@ -131,8 +134,6 @@ pub async fn run(
         payment_addr,
         did_addr,
         redirect_url,
-        well_known_did_config,
-        well_known_key_uri,
         session_encryption_public_key_uri,
         secret_key,
         did_attester,
@@ -190,10 +191,7 @@ async fn main() -> anyhow::Result<()> {
 
     let config = Configuration::parse();
 
-    let well_known_did_config_raw = config
-        .clone()
-        .get_well_known_did_config()
-        .context("Creating Well known did config failed")?;
+    let well_known_did_config_data = config.get_well_known_did_config_data();
 
     let secret_key = config.get_secret_key()?;
     let did_attester = config.get_did()?;
@@ -206,7 +204,6 @@ async fn main() -> anyhow::Result<()> {
     let attester_endpoint = config.attester_endpoint;
     let auth_client_id = config.auth_client_id;
     let redirect_url = config.redirect_url;
-    let well_known_key_uri = config.well_known_key_uri;
     let session_encryption_public_key_uri = config.session_encryption_public_key_uri;
 
     let key_manager = {
@@ -229,12 +226,11 @@ async fn main() -> anyhow::Result<()> {
         attester_endpoint,
         auth_client_id,
         redirect_url,
-        well_known_did_config_raw,
-        well_known_key_uri,
         session_encryption_public_key_uri,
         secret_key,
         signer,
         did_attester,
+        well_known_did_config_data,
     )
     .await
 }

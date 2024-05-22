@@ -8,11 +8,11 @@ import type {
 } from "@kiltprotocol/types";
 import { AttestationResponse, UseCaseConfig, UseCaseResponse } from "../types";
 
-export const API_URL = window.location.origin + "/api/v1";
+export const API_URL = window.location.origin;
 
 export async function getPaymentAddress() {
   try {
-    const response = await ky.get(`${API_URL}/payment`);
+    const response = await ky.get(`/api/v1/payment`);
     const { address } = await response.json<{ address: KiltAddress }>();
     return address;
   } catch (exception) {
@@ -24,7 +24,7 @@ export async function getPaymentAddress() {
 
 export async function getExistingDid() {
   try {
-    const response = await ky.get(`${API_URL}/did`);
+    const response = await ky.get(`/api/v1/did`);
     const { did } = await response.json<{ did: DidUri }>();
     return did;
   } catch (exception) {
@@ -37,7 +37,7 @@ export async function getExistingDid() {
 
 export async function getClaim() {
   try {
-    const response = await ky.get(`${API_URL}/claim `);
+    const response = await ky.get(`/api/v1/claim `);
 
     const requestedClaim = await response.json<{ claim: IClaimContents }>();
 
@@ -53,7 +53,9 @@ export async function getClaim() {
 
 export async function getCredential() {
   try {
-    const response = await ky.get(`${API_URL}/credential`, { timeout: false });
+    const response = await ky.get(`/api/v1/credential`, {
+      timeout: false,
+    });
     const data = await response.json<AttestationResponse[]>();
 
     if (data.length === 0) {
@@ -72,7 +74,7 @@ export async function getCredential() {
 
 export async function postClaim(claim: ICredential) {
   try {
-    const response = await ky.post(`${API_URL}/claim`, {
+    const response = await ky.post(`/api/v1/claim`, {
       json: claim,
     });
     const data = await response.json<{ claim: IClaim }>();
@@ -85,7 +87,7 @@ export async function postClaim(claim: ICredential) {
 
 export async function postUseCaseParticipation(useCaseConfig: UseCaseConfig) {
   try {
-    const response = await ky.post(`${API_URL}/use-case`, {
+    const response = await ky.post(`/api/v1/use-case`, {
       json: useCaseConfig,
       timeout: false,
     });
@@ -99,7 +101,9 @@ export async function postUseCaseParticipation(useCaseConfig: UseCaseConfig) {
 
 export async function getActiveUseCase() {
   try {
-    const response = await ky.get(`${API_URL}/use-case`, { timeout: false });
+    const response = await ky.get(`/api/v1/use-case`, {
+      timeout: false,
+    });
     const data = await response.json<UseCaseResponse>();
 
     return data.useCase;
@@ -107,6 +111,24 @@ export async function getActiveUseCase() {
     if ((exception as HTTPError).response.status === 404) {
       return undefined;
     }
+    console.error(exception);
+    throw exception;
+  }
+}
+
+// this function is needed because of the credential api.
+// in the olibox setup, the frontend is served via an proxy.
+// each session can have a different, which would result into an error in the credential api flow
+// This function is updating the url in the did-configuration.json for the backend.
+// SUUUUPER UGLY. But it works for now. :)
+export async function postUrl() {
+  try {
+    await ky.post(`.well-known/did-configuration.json`, {
+      json: {
+        url: window.location.origin,
+      },
+    });
+  } catch (exception) {
     console.error(exception);
     throw exception;
   }
