@@ -338,7 +338,7 @@ function CredentialSection({ credentials, claim, entries, mode }) {
         </p>
       )}
       {credential && credential.approved && credential.revoked && (
-        <p>❌ Zertifikat Wiederruft</p>
+        <p>❌ Zertifikat Widerruft</p>
       )}
       <dialog ref={credentialDialogRef}>
         <a
