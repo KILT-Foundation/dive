@@ -315,6 +315,7 @@ function CredentialSection({ credentials, claim, entries, mode }) {
   const handleShowCredentialClick = useCallback(() => {
     credentialDialogRef.current?.showModal();
   }, []);
+
   return (
     <fieldset>
       <legend>DIVE Anlagenzertifikat</legend>
@@ -324,7 +325,7 @@ function CredentialSection({ credentials, claim, entries, mode }) {
           {key}: {claim[key]}
         </p>
       ))}
-      {credential && (
+      {credential && credential.approved && !credential.revoked && (
         <p>
           ✅️ Zertifikat beglaubigt
           <button
@@ -335,6 +336,9 @@ function CredentialSection({ credentials, claim, entries, mode }) {
             🔍️
           </button>
         </p>
+      )}
+      {credential && credential.approved && credential.revoked && (
+        <p>❌ Zertifikat Wiederruft</p>
       )}
       <dialog ref={credentialDialogRef}>
         <a
