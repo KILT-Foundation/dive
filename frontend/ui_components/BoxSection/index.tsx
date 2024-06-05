@@ -54,7 +54,7 @@ function BoxComponent({
 
       Object.entries(cType.properties).forEach(([key, value]) => {
         if ("type" in value && value.type === "number" && key in claimContent) {
-          claimContent[key] = parseInt(claimContent[key] as string, 10);
+          claimContent[key] = parseFloat(claimContent[key] as string);
         }
       });
 
