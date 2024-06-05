@@ -1,12 +1,12 @@
 import { PubSubSessionV1, PubSubSessionV2 } from '@kiltprotocol/kilt-extension-api'
 import type { IClaim } from "@kiltprotocol/types"
-import ky from 'ky';
+import { api } from './backend';
 
 export async function fetchCredential(session: PubSubSessionV1 | PubSubSessionV2, claim: IClaim) {
   const credentialUrl = `api/v1/credential`;
 
 
-  const getTermsResponse = await ky.post(credentialUrl + "/terms", { json: claim });
+  const getTermsResponse = await api.post(`${credentialUrl}/terms`, { json: claim });
 
   if (getTermsResponse.status !== 200) {
     throw Error("Failed to get terms", await getTermsResponse.json())
@@ -26,7 +26,7 @@ export async function fetchCredential(session: PubSubSessionV1 | PubSubSessionV2
     }
   })
 
-  const credentialResponse = await ky.post(credentialUrl, { json: getCredentialRequestFromExtension, timeout: false });
+  const credentialResponse = await api.post(credentialUrl, { json: getCredentialRequestFromExtension, timeout: false });
 
   if (credentialResponse.status !== 200) {
     throw Error("Failed to get terms", await credentialResponse.json())
