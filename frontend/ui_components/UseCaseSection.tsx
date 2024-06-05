@@ -1,7 +1,6 @@
 import { SetStateAction, useCallback, useEffect, useState } from "react";
 import { getActiveUseCase, postUseCaseParticipation } from "../api/backend";
 import { UseCaseConfig } from "../types";
-import { Mode } from "../App";
 
 const RawUseCases = [
   {
@@ -31,7 +30,7 @@ const RawUseCases = [
   },
 ];
 
-function UseCaseComponent({ mode }: { mode: Mode }) {
+function UseCaseComponent() {
   // states
   const [option, setOption] = useState<string>();
   const [activeUseCase, setActiveUseCase] = useState<string>();

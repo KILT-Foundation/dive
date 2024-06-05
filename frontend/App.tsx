@@ -13,15 +13,8 @@ import OperatorComponent from "./ui_components/OperatorSection";
 import BoxComponent from "./ui_components/BoxSection";
 import UseCaseComponent from "./ui_components/UseCaseSection";
 import { AdminComponent } from "./ui_components/Admin";
-import * as localStorageHandler from "./api/localStorage";
-
-export enum Mode {
-  production = "production",
-  presentation = "presentation",
-}
 
 export function App() {
-  const [mode, setMode] = useState<Mode>(Mode.presentation);
   const [boxDidPending, setBoxDidPending] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -49,9 +42,6 @@ export function App() {
       .catch((e) => setError(error + "\n" + e.toString()));
 
     postUrl().catch((e) => setError(error + "\n" + e.toString()));
-
-    let mode = localStorageHandler.getMode();
-    setMode(mode);
   }, []);
 
   // Callbacks
@@ -118,16 +108,6 @@ export function App() {
     },
     [address]
   );
-
-  const handleModeSwitch = async () => {
-    if (mode === Mode.production) {
-      localStorageHandler.setMode(Mode.presentation);
-    } else {
-      localStorageHandler.setMode(Mode.production);
-    }
-    await ky.delete(API_URL + "/api/v1/did");
-    window.location.reload();
-  };
 
   const handleGetOwnerDIDsClick = useCallback(
     async (event: FormEvent<HTMLButtonElement>) => {
@@ -196,7 +176,6 @@ export function App() {
             handleCreateBoxDIDClick={handleCreateBoxDIDClick}
             ownerDidPending={ownerDidPending}
             progress={progress}
-            mode={mode}
           />
         )}
         {tab === "Betreiber" && (
@@ -211,10 +190,8 @@ export function App() {
             handleGetOwnerDIDsClick={handleGetOwnerDIDsClick}
           />
         )}
-        {tab === "Use Case" && <UseCaseComponent mode={mode} />}
-        {tab === "Admin" && (
-          <AdminComponent mode={mode} handleModeSwitch={handleModeSwitch} />
-        )}
+        {tab === "Use Case" && <UseCaseComponent />}
+        {tab === "Admin" && <AdminComponent />}
       </section>
       <Footer />
     </>
