@@ -2,16 +2,13 @@ import { Claim, Credential } from "@kiltprotocol/core";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 
-import { productionCtype, presentationCtype } from "../../ctypes";
+import { cType } from "../../ctypes";
 import { getClaim, getCredential, postClaim } from "../../api/backend";
 
 import {
-  PresentationClaimSection,
-  PresentationCredentialSection,
-  ProductionClaimSection,
-  ProductionCredentialSection,
-} from "./CredentialClaim";
-import { Mode } from "../../App";
+  ClaimSection,
+  CredentialSection,
+} from './CredentialClaim';
 
 function BoxComponent({
   boxDid,
@@ -19,14 +16,12 @@ function BoxComponent({
   handleCreateBoxDIDClick,
   ownerDidPending,
   progress,
-  mode,
 }: {
   boxDid: DidUri;
   boxDidPending: boolean;
   handleCreateBoxDIDClick: () => Promise<void>;
   ownerDidPending: boolean;
   progress: number;
-  mode: Mode;
 }) {
   // states
   const [claim, setClaim] = useState(undefined);
@@ -44,7 +39,7 @@ function BoxComponent({
     getCredential()
       .then((credentials) => setCredential(credentials))
       .catch((e) => setError(error + "\n" + e.toString()));
-  }, [mode]);
+  }, []);
 
   // Callbacks
 
@@ -57,17 +52,14 @@ function BoxComponent({
         formData.entries()
       ) as IClaimContents;
 
-      const ctype =
-        mode === Mode.production ? productionCtype : presentationCtype;
-
-      Object.entries(ctype.properties).forEach(([key, value]) => {
+      Object.entries(cType.properties).forEach(([key, value]) => {
         if ("type" in value && value.type === "number" && key in claimContent) {
           claimContent[key] = parseInt(claimContent[key] as string, 10);
         }
       });
 
       const claim = Claim.fromCTypeAndClaimContents(
-        ctype,
+        cType,
         claimContent,
         boxDid
       );
@@ -77,7 +69,7 @@ function BoxComponent({
       const unapprovedClaim = await postClaim(newCredential);
       setClaim(unapprovedClaim.contents);
     },
-    [boxDid, mode]
+    [boxDid]
   );
 
   return (
@@ -103,28 +95,17 @@ function BoxComponent({
           </p>
         )}
 
-        {claim &&
-          (mode === Mode.presentation ? (
-            <PresentationCredentialSection
-              credentials={credential}
-              claim={claim}
-            />
-          ) : (
-            <ProductionCredentialSection
-              credentials={credential}
-              claim={claim}
-            />
-          ))}
-        {!claim &&
-          (mode === Mode.presentation ? (
-            <form onSubmit={handleClaimSubmit}>
-              <PresentationClaimSection hasDid={!boxDid} />
-            </form>
-          ) : (
-            <form onSubmit={handleClaimSubmit}>
-              <ProductionClaimSection hasDid={!boxDid} />
-            </form>
-          ))}
+        {claim && (
+          <CredentialSection
+            credentials={credential}
+            claim={claim}
+          />
+        )}
+        {!claim && (
+          <form onSubmit={handleClaimSubmit}>
+            <ClaimSection hasDid={!boxDid} />
+          </form>
+        )}
       </>
     </section>
   );
