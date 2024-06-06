@@ -3,7 +3,7 @@ import type { IClaim } from "@kiltprotocol/types"
 import { api } from './backend';
 
 export async function fetchCredential(session: PubSubSessionV1 | PubSubSessionV2, claim: IClaim) {
-  const credentialUrl = `api/v1/credential`;
+  const credentialUrl = `credential`;
 
 
   const getTermsResponse = await api.post(`${credentialUrl}/terms`, { json: claim });

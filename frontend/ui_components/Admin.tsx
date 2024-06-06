@@ -9,7 +9,7 @@ export function AdminComponent() {
       return;
     }
     (async () => {
-      await api.delete("api/v1/did");
+      await api.delete("did");
       window.location.reload();
     })();
   }, []);

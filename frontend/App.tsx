@@ -55,7 +55,7 @@ export function App() {
       setBoxDidPending(true);
 
       let data = await api
-        .post('api/v1/did', { timeout: false })
+        .post('did', { timeout: false })
         .json<{ did: DidUri }>();
 
       setBoxDid(data.did);
@@ -90,7 +90,7 @@ export function App() {
           setProgress((old) => old + 1);
         }, 1000);
 
-        await api.post('api/v1/payment', {
+        await api.post('payment', {
           json: signedExtrinsic,
           timeout: false,
         });

@@ -6,7 +6,7 @@ export async function getSession(provider: InjectedWindowProvider): Promise<PubS
     throw new Error('No provider')
   }
 
-  const challengeUrl = `api/v1/challenge`;
+  const challengeUrl = `challenge`;
 
   const getChallengeReponse = await api.get(challengeUrl);
 
