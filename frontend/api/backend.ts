@@ -8,11 +8,15 @@ import type {
 } from "@kiltprotocol/types";
 import { AttestationResponse, UseCaseConfig, UseCaseResponse } from "../types";
 
-export const API_URL = window.location.origin;
+const basePrefixUrl = process.env.API_URL || '/'
+const prefixUrl = `${basePrefixUrl}api/v1/`;
+
+export const baseApi = ky.extend({ prefixUrl: basePrefixUrl });
+export const api = ky.extend({ prefixUrl });
 
 export async function getPaymentAddress() {
   try {
-    const response = await ky.get(`/api/v1/payment`);
+    const response = await api.get(`payment`);
     const { address } = await response.json<{ address: KiltAddress }>();
     return address;
   } catch (exception) {
@@ -24,7 +28,7 @@ export async function getPaymentAddress() {
 
 export async function getExistingDid() {
   try {
-    const response = await ky.get(`/api/v1/did`);
+    const response = await api.get(`did`);
     const { did } = await response.json<{ did: DidUri }>();
     return did;
   } catch (exception) {
@@ -37,7 +41,7 @@ export async function getExistingDid() {
 
 export async function getClaim() {
   try {
-    const response = await ky.get(`/api/v1/claim `);
+    const response = await api.get(`claim`);
 
     const requestedClaim = await response.json<{ claim: IClaimContents }>();
 
@@ -53,7 +57,7 @@ export async function getClaim() {
 
 export async function getCredential() {
   try {
-    const response = await ky.get(`/api/v1/credential`, {
+    const response = await api.get(`credential`, {
       timeout: false,
     });
     const data = await response.json<AttestationResponse[]>();
@@ -74,7 +78,7 @@ export async function getCredential() {
 
 export async function postClaim(claim: ICredential) {
   try {
-    const response = await ky.post(`/api/v1/claim`, {
+    const response = await api.post(`claim`, {
       json: claim,
     });
     const data = await response.json<{ claim: IClaim }>();
@@ -87,7 +91,7 @@ export async function postClaim(claim: ICredential) {
 
 export async function postUseCaseParticipation(useCaseConfig: UseCaseConfig) {
   try {
-    const response = await ky.post(`/api/v1/use-case`, {
+    const response = await api.post(`use-case`, {
       json: useCaseConfig,
       timeout: false,
     });
@@ -101,7 +105,7 @@ export async function postUseCaseParticipation(useCaseConfig: UseCaseConfig) {
 
 export async function getActiveUseCase() {
   try {
-    const response = await ky.get(`/api/v1/use-case`, {
+    const response = await api.get(`use-case`, {
       timeout: false,
     });
     const data = await response.json<UseCaseResponse>();
@@ -123,7 +127,7 @@ export async function getActiveUseCase() {
 // SUUUUPER UGLY. But it works for now. :)
 export async function postUrl() {
   try {
-    await ky.post(`.well-known/did-configuration.json`, {
+    await baseApi.post(`.well-known/did-configuration.json`, {
       json: {
         url: window.location.origin,
       },

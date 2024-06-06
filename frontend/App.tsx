@@ -1,11 +1,10 @@
 import { type FormEvent, useCallback, useState, useEffect } from "react";
-import ky from "ky";
 import type { DidUri, KiltAddress } from "@kiltprotocol/types";
 
 import {
   getExistingDid,
   getPaymentAddress,
-  API_URL,
+  api,
   postUrl,
 } from "./api/backend";
 import Footer from "./ui_components/FooterSection";
@@ -55,8 +54,8 @@ export function App() {
     try {
       setBoxDidPending(true);
 
-      let data = await ky
-        .post(`${API_URL}/api/v1/did`, { timeout: false })
+      let data = await api
+        .post('did', { timeout: false })
         .json<{ did: DidUri }>();
 
       setBoxDid(data.did);
@@ -91,7 +90,7 @@ export function App() {
           setProgress((old) => old + 1);
         }, 1000);
 
-        await ky.post(`${API_URL}/api/v1/payment`, {
+        await api.post('payment', {
           json: signedExtrinsic,
           timeout: false,
         });

@@ -1,7 +1,6 @@
 import { useCallback } from "react";
-import ky from "ky";
 
-import { API_URL } from "../api/backend";
+import { api } from "../api/backend";
 
 export function AdminComponent() {
   // Callbacks
@@ -10,7 +9,7 @@ export function AdminComponent() {
       return;
     }
     (async () => {
-      await ky.delete(API_URL + "/api/v1/did");
+      await api.delete("did");
       window.location.reload();
     })();
   }, []);
