@@ -23,7 +23,7 @@ export function ClaimSection({ hasDid }: { hasDid: boolean }) {
       <p>
         <label>
           Nennleistung (kW):
-          <input name="Nennleistung (kW)" required type="number" />
+          <input name="Nennleistung (kW)" required type="number" step="any" />
         </label>
       </p>
       <p>
