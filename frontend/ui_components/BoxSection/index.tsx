@@ -5,10 +5,7 @@ import type { IClaimContents, DidUri } from "@kiltprotocol/types";
 import { cType } from "../../ctypes";
 import { getClaim, getCredential, postClaim } from "../../api/backend";
 
-import {
-  ClaimSection,
-  CredentialSection,
-} from './CredentialClaim';
+import { ClaimSection, CredentialSection } from "./CredentialClaim";
 
 function BoxComponent({
   boxDid,
@@ -56,18 +53,28 @@ function BoxComponent({
         if ("type" in value && value.type === "number" && key in claimContent) {
           claimContent[key] = parseFloat(claimContent[key] as string);
         }
+
+        if (claimContent[key] === "" || Number.isNaN(claimContent[key])) {
+          delete claimContent[key];
+        }
       });
 
-      const claim = Claim.fromCTypeAndClaimContents(
-        cType,
-        claimContent,
-        boxDid
-      );
+      try {
+        const claim = Claim.fromCTypeAndClaimContents(
+          cType,
+          claimContent,
+          boxDid
+        );
 
-      const newCredential = Credential.fromClaim(claim);
+        const newCredential = Credential.fromClaim(claim);
 
-      const unapprovedClaim = await postClaim(newCredential);
-      setClaim(unapprovedClaim.contents);
+        const unapprovedClaim = await postClaim(newCredential);
+        setClaim(unapprovedClaim.contents);
+      } catch (e) {
+        console.error(e.cause);
+        setError(e.toString());
+        return;
+      }
     },
     [boxDid]
   );
@@ -95,12 +102,7 @@ function BoxComponent({
           </p>
         )}
 
-        {claim && (
-          <CredentialSection
-            credentials={credential}
-            claim={claim}
-          />
-        )}
+        {claim && <CredentialSection credentials={credential} claim={claim} />}
         {!claim && (
           <form onSubmit={handleClaimSubmit}>
             <ClaimSection hasDid={!boxDid} />
