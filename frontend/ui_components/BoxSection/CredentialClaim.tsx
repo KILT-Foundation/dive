@@ -5,12 +5,23 @@ import { AttestationResponse } from "../../types";
 
 const entries = [
   "Art der Anlage",
-  "Nennleistung (kW)",
-  "Standort",
-  "SMGW ID",
-  "Meter ID",
-  "Messlokations-ID",
+  "Anschlussnetzbetreiber",
+  "Betreiber",
+  "Betreiberstatus",
+  "Bruttoleistung",
+  "EEG Inbetriebnahmedatum",
+  "EEG Registrierungsdatum",
+  "Errichtungsort(Lage)",
+  "Inbetriebnahmedatum",
+  "Installierte Leistung",
   "Marktlokations-ID",
+  "Messlokations-ID",
+  "Meter ID",
+  "Name der Einheit",
+  "Registrierungsdatum im aktuellen Betriebsstatus",
+  "SMGW ID",
+  "Standort",
+  "Wechselrichterleistung",
 ];
 
 export function ClaimSection({ hasDid }: { hasDid: boolean }) {
@@ -18,37 +29,93 @@ export function ClaimSection({ hasDid }: { hasDid: boolean }) {
     <fieldset>
       <legend>DIVE Anlagenzertifikat</legend>
       <p>
-        Art der Anlage: <input name="Art der Anlage" required />
-      </p>
-      <p>
+        Art der Anlage:
         <label>
-          Nennleistung (kW):
-          <input name="Nennleistung (kW)" required type="number" step="any" />
+          <input
+            name="Art der Anlage"
+            value="Solar"
+            type="radio"
+            defaultChecked
+          />
+          Solar
+        </label>
+        <label>
+          <input name="Art der Anlage" value="Speicher" type="radio" />
+          Speicher
         </label>
       </p>
       <p>
         <label>
-          Standort: <input name="Standort" required />
+          Betreiber: <input name="Betreiber" />
         </label>
       </p>
       <p>
         <label>
-          SMGW ID: <input name="SMGW ID" required />
+          Betreiberstatus: <input name="Betreiberstatus" />
         </label>
       </p>
       <p>
         <label>
-          Meter ID: <input name="Meter ID" required />
+          Standort: <input name="Standort" />
         </label>
       </p>
       <p>
         <label>
-          Messlokations-ID: <input name="Messlokations-ID" required />
+          Errichtungsort (Lage): <input name="Errichtungsort (Lage)" />
         </label>
       </p>
       <p>
         <label>
-          Marktlokations-ID: <input name="Marktlokations-ID" required />
+          Name der Einheit: <input name="Name der Einheit" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Bruttoleistung:
+          <input name="Bruttoleistung" type="number" step="any" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Wechselrichterleistung:
+          <input name="Wechselrichterleistung" type="number" step="any" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Inbetriebnahmedatum: <input name="Inbetriebnahmedatum" type="date" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Anschlussnetzbetreiber: <input name="Anschlussnetzbetreiber" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Registrierungsdatum im aktuellen Betriebsstatus:
+          <input
+            name="Registrierungsdatum im aktuellen Betriebsstatus"
+            type="date"
+          />
+        </label>
+      </p>
+      <p>
+        <label>
+          Installierte Leistung:
+          <input name="Installierte Leistung" type="number" step="any" />
+        </label>
+      </p>
+      <p>
+        <label>
+          EEG Inbetriebnahmedatum:
+          <input name="EEG Inbetriebnahmedatum" type="date" />
+        </label>
+      </p>
+      <p>
+        <label>
+          EEG Registrierungsdatum:
+          <input name="EEG Registrierungsdatum" type="date" />
         </label>
       </p>
 
@@ -66,8 +133,8 @@ export function CredentialSection({ credentials, claim }) {
   useEffect(() => {
     const targetCredential = credentials.find(
       (credential) =>
-        `kilt:ctype:${credential.credential.claim.cTypeHash}` ===
-          cType.$id && credential.approved
+        `kilt:ctype:${credential.credential.claim.cTypeHash}` === cType.$id &&
+        credential.approved
     );
     setCredential(targetCredential);
   }, [credentials]);
@@ -80,10 +147,7 @@ export function CredentialSection({ credentials, claim }) {
     <fieldset>
       <legend>DIVE Anlagenzertifikat</legend>
       {entries.map((key) => (
-        <p key={key}>
-          {key in claim && "✅️ "}
-          {key}: {claim[key]}
-        </p>
+        <p key={key}>{key in claim && `${key}: ${claim[key]} ✅️`}</p>
       ))}
       {credential && credential.approved && !credential.revoked && (
         <p>

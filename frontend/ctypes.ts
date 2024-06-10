@@ -1,13 +1,43 @@
 import type { ICType } from "@kiltprotocol/types";
 
 export const cType = {
-  $id: "kilt:ctype:0xbde8192c1a7e67395218029a7028af448505238c85123cb8a4fbe274bf45f71f",
+  $id: "kilt:ctype:0x2a63756ff4934eb51d5c405476ea92dfa9413388a8a33c37755442e2111304b5",
   $schema:
     "ipfs://bafybeiah66wbkhqbqn7idkostj2iqyan2tstc4tpqt65udlhimd7hcxjyq/",
   additionalProperties: false,
   properties: {
+    Anschlussnetzbetreiber: {
+      type: "string",
+    },
     "Art der Anlage": {
       type: "string",
+    },
+    Betreiber: {
+      type: "string",
+    },
+    Betreiberstatus: {
+      type: "string",
+    },
+    Bruttoleistung: {
+      type: "number",
+    },
+    "EEG Inbetriebnahmedatum": {
+      format: "date",
+      type: "string",
+    },
+    "EEG Registrierungsdatum": {
+      format: "date",
+      type: "string",
+    },
+    "Errichtungsort (Lage)": {
+      type: "string",
+    },
+    Inbetriebnahmedatum: {
+      format: "date",
+      type: "string",
+    },
+    "Installierte Leistung": {
+      type: "number",
     },
     "Marktlokations-ID": {
       type: "string",
@@ -18,8 +48,12 @@ export const cType = {
     "Meter ID": {
       type: "string",
     },
-    "Nennleistung (kW)": {
-      type: "number",
+    "Name der Einheit": {
+      type: "string",
+    },
+    "Registrierungsdatum im aktuellen Betriebsstatus": {
+      format: "date",
+      type: "string",
     },
     "SMGW ID": {
       type: "string",
@@ -27,8 +61,11 @@ export const cType = {
     Standort: {
       type: "string",
     },
+    Wechselrichterleistung: {
+      type: "number",
+    },
   },
-  title: "DIVE Anlagenzertifikat",
+  title: "DIVE Anlagezertifikat",
   type: "object",
 } as ICType;
 

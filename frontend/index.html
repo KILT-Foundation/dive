@@ -82,11 +82,22 @@
       border-radius: 0.5rem;
     }
 
-    fieldset label {
+    fieldset label:not(:has(input[type="radio"])) {
       display: flex;
       width: 23rem;
       justify-content: space-between;
       align-items: center;
+    }
+
+    fieldset:has(input[value="Speicher"]:checked) {
+      p:has(
+        [name="Errichtungsort (Lage)"],
+        [name="Installierte Leistung"],
+        [name="EEG Inbetriebnahmedatum"],
+        [name="EEG Registrierungsdatum"]
+      ) {
+        display: none;
+      }
     }
 
     #credential {
