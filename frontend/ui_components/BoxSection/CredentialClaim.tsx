@@ -162,7 +162,7 @@ export function CredentialSection({ credentials, claim }) {
         </p>
       )}
       {credential && credential.approved && credential.revoked && (
-        <p>❌ Zertifikat Widerruft</p>
+        <p>❌ Ungültiges Zertifikat</p>
       )}
       <dialog ref={credentialDialogRef}>
         <a
