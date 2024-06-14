@@ -6,6 +6,7 @@ use crate::{
     error::ServerError,
     http_client::post_use_case_participation,
     kilt::{
+        connect,
         did_helper::{get_did_address, get_did_service_endpoint},
         error::UseCaseAPIError,
         tx::{add_service_endpoint, remove_service_endpoint},
@@ -22,6 +23,7 @@ async fn participate_to_use_case(
     let keys = app_state.key_manager.lock().await;
     let did_auth_signer = keys.get_did_auth_signer().clone();
     let submitter_signer = keys.get_payment_account_signer();
+    let chain_client = connect(&app_state.wss_endpoint).await?;
 
     let use_case_service_endpoint_id = &app_state.use_case_service_endpoint_id;
 
@@ -41,18 +43,15 @@ async fn participate_to_use_case(
     let concatenated_url = format!("{}/{}", use_case_did_url, formatted_did);
 
     if *update_service_endpoint {
-        if let Some(_) = get_did_service_endpoint(
-            &formatted_did,
-            use_case_service_endpoint_id,
-            &app_state.chain_client,
-        )
-        .await?
+        if let Some(_) =
+            get_did_service_endpoint(&formatted_did, use_case_service_endpoint_id, &chain_client)
+                .await?
         {
             remove_service_endpoint(
                 use_case_service_endpoint_id,
                 &submitter_signer,
                 &did_auth_signer,
-                &app_state.chain_client,
+                &chain_client,
             )
             .await?;
         }
@@ -63,7 +62,7 @@ async fn participate_to_use_case(
             &app_state.kilt_service_endpoint_type,
             &submitter_signer,
             &did_auth_signer,
-            &app_state.chain_client,
+            &chain_client,
         )
         .await?;
     }
@@ -81,15 +80,13 @@ async fn get_use_case(app_state: web::Data<AppState>) -> Result<impl Responder, 
     let keys = app_state.key_manager.lock().await;
     let did_auth_signer = keys.get_did_auth_signer().clone();
     let formatted_did = get_did_address(did_auth_signer);
+    let chain_client = connect(&app_state.wss_endpoint).await?;
 
     let use_case_service_endpoint_id = &app_state.use_case_service_endpoint_id;
 
-    let maybe_service_endpoint = get_did_service_endpoint(
-        &formatted_did,
-        use_case_service_endpoint_id,
-        &app_state.chain_client,
-    )
-    .await?;
+    let maybe_service_endpoint =
+        get_did_service_endpoint(&formatted_did, use_case_service_endpoint_id, &chain_client)
+            .await?;
 
     match maybe_service_endpoint {
         Some(service_endpoint) => {

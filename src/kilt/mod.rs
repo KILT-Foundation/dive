@@ -6,7 +6,7 @@ pub mod well_known_did_configuration;
 mod utils;
 
 use subxt::ext::sp_runtime::traits::{IdentifyAccount, Verify};
-use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config};
+use subxt::{config::polkadot::PolkadotExtrinsicParams, config::Config, OnlineClient};
 
 #[cfg(feature = "spiritnet")]
 #[subxt::subxt(runtime_metadata_path = "./metadata/spiritnet_11300.scale")]
@@ -32,4 +32,8 @@ impl Config for KiltConfig {
     type Header = subxt::config::substrate::SubstrateHeader<u64, Self::Hasher>;
     type Signature = subxt::ext::sp_runtime::MultiSignature;
     type ExtrinsicParams = PolkadotExtrinsicParams<Self>;
+}
+
+pub async fn connect(wss_endpoint: &str) -> Result<OnlineClient<KiltConfig>, subxt::Error> {
+    OnlineClient::<KiltConfig>::from_url(wss_endpoint).await
 }

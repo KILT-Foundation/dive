@@ -7,7 +7,7 @@ use crate::{
     device::key_manager::KeyManager,
     error::ServerError,
     http_client::{check_jwt_health, get_credentials_from_attester, login_to_open_did},
-    kilt::error::CredentialAPIError,
+    kilt::{connect, error::CredentialAPIError},
     routes::dto::*,
     AppState,
 };
@@ -16,7 +16,7 @@ use crate::{
 async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
     let key_manager = app_state.key_manager.lock().await;
     let sign_pair = key_manager.get_did_auth_signer();
-    let chain_client = &app_state.chain_client;
+    let chain_client = connect(&app_state.wss_endpoint).await?;
 
     let mut jwt_token = app_state.jwt_token.lock().await;
 
@@ -24,7 +24,7 @@ async fn get_credential(app_state: web::Data<AppState>) -> Result<impl Responder
 
     if !is_jwt_healty {
         let new_token = login_to_open_did(
-            chain_client,
+            &chain_client,
             sign_pair,
             &app_state.auth_client_id,
             &app_state.auth_endpoint,
@@ -98,12 +98,14 @@ async fn get_terms(
 
 #[post("")]
 async fn request_attestation(
-    state: web::Data<AppState>,
+    app_state: web::Data<AppState>,
     encrypted_message: web::Json<EncryptedMessage>,
 ) -> Result<HttpResponse, ServerError> {
+    let chain_client = connect(&app_state.wss_endpoint).await?;
+
     let others_pubkey = crate::kilt::did_helper::get_encryption_key_from_fulldid_key_uri(
         &encrypted_message.sender_key_uri,
-        &state.chain_client,
+        &chain_client,
     )
     .await?;
 
@@ -111,7 +113,7 @@ async fn request_attestation(
         &encrypted_message.cipher_text,
         &encrypted_message.nonce,
         &others_pubkey,
-        &state.secret_key,
+        &app_state.secret_key,
     )
     .map_err(|_| CredentialAPIError::Attestation("Unable to decrypt"))?;
 
@@ -128,17 +130,19 @@ async fn request_attestation(
         ))?
     }
 
-    let payer = state.key_manager.lock().await.get_payment_account_signer();
-
-    let chain_client = state.chain_client.clone();
+    let payer = app_state
+        .key_manager
+        .lock()
+        .await
+        .get_payment_account_signer();
 
     crate::kilt::tx::create_claim(
         H256::from_slice(&claim_hash),
         H256::from_slice(&ctype_hash),
-        &state.did_attester,
+        &app_state.did_attester,
         &chain_client,
         &payer,
-        &state.signer,
+        &app_state.signer,
     )
     .await?;
 

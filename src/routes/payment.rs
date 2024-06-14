@@ -5,6 +5,7 @@ use crate::{
     dto::PayerAddress,
     error::ServerError,
     kilt::{
+        connect,
         error::{FormatError, TxError},
         tx::{submit_call, WaitFor},
     },
@@ -24,7 +25,7 @@ async fn submit_extrinsic(
     app_state: web::Data<AppState>,
     body: web::Json<String>,
 ) -> Result<impl Responder, ServerError> {
-    let chain_client = &app_state.chain_client;
+    let chain_client = connect(&app_state.wss_endpoint).await?;
     let keys = app_state.key_manager.lock().await;
     let signer = keys.get_payment_account_signer();
     let call_string = body.0;
@@ -34,7 +35,7 @@ async fn submit_extrinsic(
     let call = hex::decode(trimmed_call)
         .map_err(|e| ServerError::Tx(TxError::Format(FormatError::Hex(e))))?;
 
-    let tx = submit_call(chain_client, &signer, call, WaitFor::Finalized).await?;
+    let tx = submit_call(&chain_client, &signer, call, WaitFor::Finalized).await?;
 
     log::info!("Tx hash: {}", tx);
     Ok(HttpResponse::Ok())

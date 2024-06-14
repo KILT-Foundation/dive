@@ -31,7 +31,6 @@ use subxt::{
     ext::sp_core::{crypto::Ss58Codec, sr25519::Pair},
     tx::PairSigner,
     utils::AccountId32,
-    OnlineClient,
 };
 use tokio::sync::Mutex;
 
@@ -57,7 +56,7 @@ pub struct AppState {
     // key manager for handling the Did keys and payment account
     pub key_manager: Arc<Mutex<PairKeyManager>>,
     // api instance to interact with the blockchain.
-    pub chain_client: Arc<OnlineClient<KiltConfig>>,
+    pub wss_endpoint: String,
     pub auth_endpoint: String,
     pub attester_endpoint: String,
     pub auth_client_id: String,
@@ -113,21 +112,17 @@ pub async fn run(
     log::info!("payment_account_id: {}", payment_addr);
     log::info!("Olibox DID: {}{}", DID_PREFIX, did_addr);
 
-    let api = OnlineClient::<KiltConfig>::from_url(&wss_endpoint)
-        .await
-        .context("Creating the onlineclient should not fail.")?;
-
     log::info!("Connected to: {}", wss_endpoint);
 
     log::info!("Source dir: {}", source_dir);
 
     let app_state = AppState {
         key_manager: Arc::new(Mutex::new(key_manager)),
-        chain_client: Arc::new(api),
         jwt_token: Arc::new(Mutex::new(String::new())),
         signer: Arc::new(signer),
         well_known_did_config_data: Arc::new(Mutex::new(well_known_did_config_data)),
         app_name: "Olibox".to_string(),
+        wss_endpoint,
         attester_endpoint,
         auth_client_id,
         auth_endpoint,

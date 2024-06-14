@@ -8,6 +8,7 @@ use crate::{
     dto::Credential,
     error::ServerError,
     http_client::{check_jwt_health, login_to_open_did, post_claim_to_attester},
+    kilt::connect,
     AppState,
 };
 
@@ -29,7 +30,7 @@ async fn post_base_claim(
     let key_manager = app_state.key_manager.lock().await;
 
     let sign_pair = key_manager.get_did_auth_signer();
-    let chain_client = &app_state.chain_client;
+    let chain_client = connect(&app_state.wss_endpoint).await?;
 
     let mut jwt_token = app_state.jwt_token.lock().await;
 
@@ -37,7 +38,7 @@ async fn post_base_claim(
 
     if !is_jwt_healthy {
         let new_token = login_to_open_did(
-            chain_client,
+            &chain_client,
             sign_pair,
             &app_state.auth_client_id,
             &app_state.auth_endpoint,

@@ -6,6 +6,7 @@ use crate::{
     dto::{DidAddress, TxResponse},
     error::ServerError,
     kilt::{
+        connect,
         did_helper::{query_did_doc, ADDRESS_FORMAT, DID_PREFIX},
         tx::create_did,
     },
@@ -19,8 +20,9 @@ async fn register_device_did(
     let keys = app_state.key_manager.lock().await;
     let did_auth_signer = &keys.get_did_auth_signer();
     let submitter_signer = &keys.get_payment_account_signer();
-    let chain_client = &app_state.chain_client;
-    let extrinsic_hash = create_did(did_auth_signer, submitter_signer, chain_client).await?;
+    let chain_client = connect(&app_state.wss_endpoint).await?;
+    let extrinsic_hash = create_did(did_auth_signer, submitter_signer, &chain_client).await?;
+
     let tx = format!("0x{}", hex::encode(extrinsic_hash));
     log::info!("Tx hash: {}", tx);
 
@@ -40,12 +42,13 @@ async fn register_device_did(
 async fn get_did(app_state: web::Data<AppState>) -> Result<impl Responder, ServerError> {
     let keys = app_state.key_manager.lock().await;
     let did_auth_signer = &keys.get_did_auth_signer();
+    let chain_client = connect(&app_state.wss_endpoint).await?;
 
     let did = did_auth_signer
         .account_id()
         .to_ss58check_with_version(ADDRESS_FORMAT.into());
-    let chain_client = &app_state.chain_client;
-    query_did_doc(&did, chain_client).await?;
+
+    query_did_doc(&did, &chain_client).await?;
     Ok(HttpResponse::Ok().json(DidAddress {
         did: format!("{}{}", DID_PREFIX, did),
     }))
