@@ -25,8 +25,8 @@ const RawUseCases = [
   },
   {
     name: "Example",
-    did: "did:web:example.com",
-    url: "https://greenproofs.dive.energyweb.org",
+    did: "did:gp-dive-dev.energyweb.org",
+    url: "https://gp-dive-dev.energyweb.org/",
   },
 ];
 
