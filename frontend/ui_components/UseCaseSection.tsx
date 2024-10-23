@@ -5,22 +5,22 @@ import { UseCaseConfig } from "../types";
 const RawUseCases = [
   {
     name: "Energy Web Green Proofs",
-    did: "did:web:dive-greenproofs.energywebx.com",
+    did: "did:web:gp-dive-dev.energyweb.org",
     url: "https://gp-dive-dev.energyweb.org",
   },
   {
     name: "Track & Trace (via Energy Web)",
-    did: "did:web:dive-ett-proxy.energywebx.com",
+    did: "did:web:gp-dive-dev.energyweb.org",
     url: "https://gp-dive-dev.energyweb.org",
   },
   {
     name: "Energy Web Flex",
-    did: "did:web:dive-flex.energywebx.com",
+    did: "did:web:gp-dive-dev.energyweb.org",
     url: "https://gp-dive-dev.energyweb.org",
   },
   {
     name: "Wrong URL",
-    did: "did:gp-dive-dev.energyweb.org",
+    did: "did:web:gp-dive-dev.energyweb.org",
     url: "https://gp-dive-dev.energyweb.org/",
   },
 ];

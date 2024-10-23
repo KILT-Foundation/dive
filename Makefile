@@ -13,6 +13,7 @@ debug-build: .build-image $(shell find ./src -type f)
 		cargo build --target=aarch64-unknown-linux-gnu $(BUILD_ARGS)
 
 #Create a release build
+# thats buggy. make sure the build image is created before running this. 
 release-build: .build-image $(shell find ./src -type f)
 	docker run --rm -it \
 		-v $(shell pwd):/app \
